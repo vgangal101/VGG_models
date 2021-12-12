@@ -1,0 +1,106 @@
+import tensorflow as tf
+import argparse
+import models
+
+# 1. first prepare code on the cifar10 dataset
+# 2. imagenet is second step ,
+
+def get_args():
+    parser = argparse.ArgumentParser(description='training configurations')
+    parser.add_arguments('--model',type=str,help='choices are vgg11,vgg13,vgg16,vgg19') # either vgg11,13,16,19
+    parser.add_arguments('--dataset',type=str,help='cifar10,cifar100,imagenet') # either 'cifar10' or 'imagenet'
+    parser.add_arguments('--batch_size',type=int,default=256)
+    # have the requirement that if the code is imagenet , then specify a path to dataset
+    parser.add_arguments('--data_path',type=str,help='only provide if imagenet is specified')
+
+
+
+def normalize_image(image,label):
+    return tf.cast(image,tf.float32) / 255., label
+
+def preprocess_dataset(train_dataset,test_dataset):
+    """
+    train_dataset : tf.data.Dataset
+    test_dataset : tf.data.Dataset
+
+    should return normalized image data
+    """
+
+    train_dataset = train_dataset.map(normalize_image)
+    test_dataset = test_dataset.map(normalize_image)
+
+
+    return train_dataset, test_dataset
+
+
+def get_dataset(dataset_name):
+    # should return a TF dataset object for train, test
+    train_dataset = None
+    test_dataset = None
+    if dataset_name.lower() == 'cifar10':
+        (x_train,y_train), (x_test,y_test) = tf.keras.datasets.cifar10.load_data()
+        train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
+        test_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
+        #train_dataset = train_dataset.map(normalize_image)
+        #test_dataset = test_dataset.map(normalize_image)
+        return train_dataset, test_dataset
+    elif dataset_name.lower() == 'cifar100':
+        (x_train,y_train), (x_test,y_test) = tf.keras.datasets.cifar100.load_data()
+        train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
+        test_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
+        train_dataset = train_dataset.map(normalize_image)
+        test_dataset = test_dataset.map(normalize_image)
+    elif dataset_name.lower() == 'imagenet':
+        raise NotImplementedError
+
+def main():
+    args = get_args()
+    num_classes = None
+
+    dataset_name = args.dataset
+    if dataset_name.lower() == 'cifar10':
+        num_classes = 10
+    elif dataset_name.lower() == 'cifar100'
+        num_classes = 100
+    elif dataset_name.lower() == 'imagenet':
+        raise NotImplementedError
+        #num_classes = 1000
+    else:
+        raise ValueError('Invalid dataset specified, dataset specified=', args.dataset)
+
+    model = None
+    if args.model.lower() == 'vgg11':
+        model = models.VGG11_A(num_classes)
+    elif args.model.lower() == 'vgg13':
+        model = models.VGG13_B(num_classes)
+    elif args.model.lower() == 'vgg16':
+        model = models.VGG16_B(num_classes)
+    elif args.model.lower() == 'vgg19':
+        model = models.VGG19_D(num_classes)
+    else:
+        raise ValueError('Invalid value for the model name' + 'got model name' + args.models)
+
+
+    print("preparing data")
+    train_dataset, test_dataset = prepare_dataset(args.dataset)
+    train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
+
+    model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-9),
+                  loss=keras.losses.CategoricalCrossEntropy()
+                  metrics=['accuracy'])
+    print("starting training")
+    history = model.fit(train_dataset,batch_size=args.batch_size,epochs=50)
+
+    results = model.evaluate(test_dataset)
+    print(results)
+
+    save_to_dir = args.model.lower() + '_' + args.dataset.lower()
+    model.save(save_to_dir)
+    print("training complete")
+
+
+
+
+
+if __name__ == '__main__':
+    main()
