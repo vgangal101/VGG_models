@@ -73,13 +73,13 @@ def main():
 
     model = None
     if args.model.lower() == 'vgg11':
-        model = models.VGG11_A(num_classes,img_shape)
+        model = models2.VGG11_A(num_classes,img_shape)
     elif args.model.lower() == 'vgg13':
-        model = models.VGG13_B(num_classes,img_shape)
+        model = models2.VGG13_B(num_classes,img_shape)
     elif args.model.lower() == 'vgg16':
-        model = models.VGG16_B(num_classes,img_shape)
+        model = models2.VGG16_D(num_classes,img_shape)
     elif args.model.lower() == 'vgg19':
-        model = models.VGG19_D(num_classes,img_shape)
+        model = models2.VGG19_E(num_classes,img_shape)
     else:
         raise ValueError('Invalid value for the model name' + 'got model name' + args.models)
 
@@ -91,7 +91,7 @@ def main():
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-9),
                   loss=keras.losses.SparseCategoricalCrossentropy(),
                   metrics=['accuracy'])
-    
+
     print("starting training")
     history = model.fit(train_dataset,batch_size=args.batch_size,epochs=50)
 
