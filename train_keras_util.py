@@ -1,6 +1,6 @@
 import tensorflow as tf
 import argparse
-import models
+import models2
 from tensorflow import keras
 
 
@@ -22,7 +22,7 @@ def get_args():
 def normalize_image(image,label):
     return tf.cast(image,tf.float32) / 255., label
 
-def preprocess_dataset(train_dataset,test_dataset):
+def preprocess_dataset(args,train_dataset,test_dataset):
     """
     train_dataset : tf.data.Dataset
     test_dataset : tf.data.Dataset
@@ -30,8 +30,8 @@ def preprocess_dataset(train_dataset,test_dataset):
     should return normalized image data
     """
 
-    train_dataset = train_dataset.map(normalize_image)
-    test_dataset = test_dataset.map(normalize_image)
+    train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
+    test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
 
 
     return train_dataset, test_dataset
@@ -86,21 +86,38 @@ def main():
 
     print("preparing data")
     train_dataset, test_dataset = get_dataset(args.dataset)
-    train_dataset, test_dataset = preprocess_dataset(train_dataset,test_dataset)
+    train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
 
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-9),
                   loss=keras.losses.SparseCategoricalCrossentropy(),
                   metrics=['accuracy'])
 
     print("starting training")
-    history = model.fit(train_dataset,batch_size=args.batch_size,epochs=50)
+    history = model.fit(train_dataset,epochs=50)
 
     results = model.evaluate(test_dataset)
     print(results)
 
+    train_eval_log_file = open('./train_eval_file_' + args.model + '_' +  args.dataset + '_' + args.batch_size + '.log', 'w')
+    
+    train_eval_log_file.write('training metrics\n')
+    train_eval_log_file.write('\n')
+    
+    for key in history:    
+        train_eval_log_file.write(str(key) + '=' + history(key) + '\n')
+
+    
+    train_eval_log_file.write('\n')
+    
+    train_eval_log_file.write('eval results\n')
+
+    for key in results: 
+        train_eval_log_file.write(str(key) + '=' + results(key) + '\n')
+
+
     save_to_dir = args.model.lower() + '_' + args.dataset.lower()
     model.save(save_to_dir)
-    print("training complete")
+    print("training and eval complete")
 
 
 
