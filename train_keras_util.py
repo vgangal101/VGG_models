@@ -14,6 +14,7 @@ def get_args():
     parser.add_argument('--batch_size',type=int,default=256)
     # have the requirement that if the code is imagenet , then specify a path to dataset
     parser.add_argument('--data_path',type=str,help='only provide if imagenet is specified')
+    parser.add_argument('--num_epochs',type=int,default=100,help='provide number of epochs to run')
     args = parser.parse_args()
     return args
 
@@ -59,7 +60,9 @@ def main():
     num_classes = None
     img_shape = None
     dataset_name = args.dataset
-    if dataset_name.lower() == 'cifar10':
+    if dataset_name == None:
+        raise ValueError('No dataset specified. Exiting')
+    elif dataset_name.lower() == 'cifar10':
         img_shape = (32,32,3)
         num_classes = 10
     elif dataset_name.lower() == 'cifar100':
@@ -83,37 +86,40 @@ def main():
     else:
         raise ValueError('Invalid value for the model name' + 'got model name' + args.models)
 
+        
+        
 
     print("preparing data")
     train_dataset, test_dataset = get_dataset(args.dataset)
     train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
 
-    model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-9),
-                  loss=keras.losses.SparseCategoricalCrossentropy(),
+    model.compile(optimizer=keras.optimizers.SGD(learning_rate=1e-2,momentum=0.9),
+                  loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   metrics=['accuracy'])
-
+    
     print("starting training")
-    history = model.fit(train_dataset,epochs=50)
+    history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=test_dataset)
 
     results = model.evaluate(test_dataset)
     print(results)
 
-    train_eval_log_file = open('./train_eval_file_' + args.model + '_' +  args.dataset + '_' + args.batch_size + '.log', 'w')
+    train_eval_log_file = open('./train_eval_file_' + args.model + '_' +  args.dataset + '_' + str(args.batch_size) + '.log', 'w')
     
-    train_eval_log_file.write('training metrics\n')
-    train_eval_log_file.write('\n')
+    #train_eval_log_file.write('training metrics\n')
+    #train_eval_log_file.write('\n')
     
-    for key in history:    
-        train_eval_log_file.write(str(key) + '=' + history(key) + '\n')
+    #for key in history.history:    
+    #   train_eval_log_file.write(str(key) + '=' + history.history[key] + '\n')
 
     
-    train_eval_log_file.write('\n')
+    #train_eval_log_file.write('\n')
     
-    train_eval_log_file.write('eval results\n')
+    #train_eval_log_file.write('eval results\n')
+ 
+    train_eval_log_file.write("test results\n")
 
-    for key in results: 
-        train_eval_log_file.write(str(key) + '=' + results(key) + '\n')
-
+    train_eval_log_file.write('test_loss' + '=' + str(results[0]) + '\n')
+    train_eval_log_file.write('test_acc' + '=' + str(results[1]) + '\n')
 
     save_to_dir = args.model.lower() + '_' + args.dataset.lower()
     model.save(save_to_dir)
