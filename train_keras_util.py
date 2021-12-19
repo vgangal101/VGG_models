@@ -10,12 +10,13 @@ import matplotlib.pyplot as plt
 
 def get_args():
     parser = argparse.ArgumentParser(description='training configurations')
-    parser.add_argument('--model',type=str,help='choices are vgg11,vgg13,vgg16,vgg19') # either vgg11,13,16,19
+    parser.add_argument('--model',type=str,help='choices are vgg11,vgg13,vgg16c,vgg16d,vgg19') # either vgg11,13,16,19
     parser.add_argument('--dataset',type=str,help='cifar10,cifar100,imagenet') # either 'cifar10' or 'imagenet'
-    parser.add_argument('--batch_size',type=int,default=64)
+    parser.add_argument('--batch_size',type=int,default=256)
     # have the requirement that if the code is imagenet , then specify a path to dataset
     parser.add_argument('--data_path',type=str,help='only provide if imagenet is specified')
-    parser.add_argument('--num_epochs',type=int,default=50,help='provide number of epochs to run')
+    parser.add_argument('--num_epochs',type=int,default=100,help='provide number of epochs to run')
+    parser.add_argument('--lr',type=float,default=1e-2,help='learning rate to use')
     args = parser.parse_args()
     return args
 
@@ -119,7 +120,7 @@ def main():
     elif args.model.lower() == 'vgg19':
         model = models.VGG19_E(num_classes,img_shape)
     else:
-        raise ValueError('Invalid value for the model name' + 'got model name' + args.models)
+        raise ValueError('Invalid value for the model name' + 'got model name' + args.model)
 
         
         
@@ -128,7 +129,7 @@ def main():
     train_dataset, test_dataset = get_dataset(args.dataset)
     train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
 
-    model.compile(optimizer=keras.optimizers.SGD(learning_rate=1e-2,momentum=0.9),
+    model.compile(optimizer=keras.optimizers.SGD(learning_rate=args.lr,momentum=0.9),
                   loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   metrics=['accuracy'])
     
