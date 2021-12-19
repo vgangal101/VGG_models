@@ -1,214 +1,309 @@
 import tensorflow as tf
 from tensorflow import keras
 
-class VGG11_A(tf.keras.Model):
-    def __init__(self,num_classes,img_shape):
-        super().__init__()
-        self.model = self.build_model(num_classes,img_shape)
 
-    def build_model(self,num_classes,img_shape):
-        model = keras.Sequential()
-        #model.add(keras.layers.BatchNormalization())
-        model.add(keras.layers.InputLayer(input_shape=img_shape))
-        model.add(keras.layers.Conv2D(64,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-        model.add(keras.layers.Conv2D(128,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-        model.add(keras.layers.Dense(4096,activation='relu'))
-        model.add(keras.layers.Dense(4096,activation='relu'))
-        model.add(keras.layers.Dense(num_classes))
+def VGG11_A(num_classes,img_shape):
+    model = keras.Sequential()
 
-        return model
+    model.add(keras.layers.InputLayer(input_shape=img_shape))
 
-    def call(self,x):
-        out = self.model(x)
-        return out
+    model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
+    model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
-class VGG13_B(tf.keras.Model):
-    def __init__(self):
-        super().__init__()
-        self.model = build_model(self,num_classes,img_shape)
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
-    def build_model(self,num_classes,img_shape):
-        model = keras.Sequential()
-        #model.add(keras.layers.BatchNormalization())
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
-        model.add(keras.layers.InputLayer(input_shape=img_shape))
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+    model.add(keras.layers.Flatten())
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(num_classes))
 
-        model.add(keras.layers.Conv2D(64,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(64,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-
-        model.add(keras.layers.Conv2D(128,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(128,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
-
-        model.add(keras.layers.Dense(4096,activation='relu'))
-        model.add(keras.layers.Dense(4096,activation='relu'))
-        model.add(keras.layers.Dense(num_classes))
-
-        return model
-
-    def call(self,x):
-        out = self.model(x)
-        return out
-
-class VGG16_C(tf.keras.Model):
-    def __init__(self,num_classes,img_shape):
-        super().__init__()
-        self.model = self.build_model(num_classes,img_shape)
-
-    def build_model(self,num_classes,img_shape):
-        model = keras.Sequential()
-        #model.add(keras.layers.BatchNormalization())
-
-        model.add(keras.layers.InputLayer(input_shape=img_shape))
+    return model
 
 
-        model.add(keras.layers.Conv2D(64,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(64,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
 
-        model.add(keras.layers.Conv2D(128,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(128,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+def VGG13_B(num_classes,img_shape):
+    model = keras.Sequential()
+    #model.add(keras.layers.BatchNormalization())
 
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(256,(1,1),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.InputLayer(input_shape=img_shape))
 
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(1,1),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(1,1),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
+                    kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        model.add(keras.layers.Dense(4096, activation='relu'))
-        model.add(keras.layers.Dense(4096, activation='relu'))
-        model.add(keras.layers.Dense(num_classes))
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
-        return model
+    model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-    def call(self,x):
-        out = self.model(x)
-        return out
+    model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-class VGG16_D(tf.keras.Model):
-    def __init__(self,num_classes,img_shape):
-        super().__init__()
-        self.model = self.build_model(num_classes,img_shape)
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
-    def build_model(self,num_classes,img_shape):
-        model = keras.Sequential()
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        #model.add(keras.layers.BatchNormalization())
-        model.add(keras.layers.InputLayer(input_shape=img_shape))
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Flatten())
+
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(num_classes))
+
+    return model
 
 
-        model.add(keras.layers.Conv2D(64,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(64,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+def VGG16_C(num_classes,img_shape):
+    model = keras.Sequential()
 
-        model.add(keras.layers.Conv2D(128,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(128,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.InputLayer(input_shape=img_shape))
 
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(256,(1,1),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(1,1),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
+                    kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
-        model.add(keras.layers.Dense(4096, activation='relu'))
-        model.add(keras.layers.Dense(4096, activation='relu'))
-        model.add(keras.layers.Dense(num_classes))
+    model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        return model
+    model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-    def call(self,x):
-        out = self.model(x)
-        return out
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
-class VGG19_E(tf.keras.Model):
-    def __init__(self,num_classes,img_shape):
-        super().__init__()
-        self.model = self.build_model(num_classes,img_shape)
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-    def build_model(self,num_classes,img_shape):
-        model = keras.Sequential()
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        #model.add(keras.layers.BatchNormalization())
+    model.add(keras.layers.Conv2D(256,(1,1),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        model.add(keras.layers.InputLayer(input_shape=img_shape))
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
-        model.add(keras.layers.Conv2D(64,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(64,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
 
-        model.add(keras.layers.Conv2D(128,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(128,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(256,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
+    model.add(keras.layers.Conv2D(512,(1,1),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.Conv2D(512,(3,3),activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=(1,1)))
 
-        model.add(keras.layers.Dense(4096, activation='relu'))
-        model.add(keras.layers.Dense(4096, activation='relu'))
-        model.add(keras.layers.Dense(num_classes))
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
-        return model
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
 
-    def call(self,x):
-        out = self.model(x)
-        return out
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(1,1),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Flatten())
+
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(num_classes))
+
+    return model
+
+def VGG16_D(num_classes,img_shape):
+    model = keras.Sequential()
+
+    model.add(keras.layers.InputLayer(input_shape=img_shape))
+
+    model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
+                    kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Flatten())
+
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(num_classes))
+
+    return model
+
+
+def VGG19_E(num_classes,img_shape):
+    model = keras.Sequential()
+
+    model.add(keras.layers.InputLayer(input_shape=img_shape))
+
+    model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
+                    kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+
+    model.add(keras.layers.Flatten())
+
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(4096, activation='relu'))
+    model.add(keras.layers.Dropout(0.5))
+    model.add(keras.layers.Dense(num_classes))
+
+    return model

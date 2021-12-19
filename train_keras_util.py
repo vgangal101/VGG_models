@@ -1,20 +1,21 @@
 import tensorflow as tf
 import argparse
-import models2
+import models
 from tensorflow import keras
-
+import matplotlib.pyplot as plt
 
 # 1. first prepare code on the cifar10 dataset
+#    make sure you are able to train efectively, build graph training functionality 
 # 2. imagenet is second step ,
 
 def get_args():
     parser = argparse.ArgumentParser(description='training configurations')
     parser.add_argument('--model',type=str,help='choices are vgg11,vgg13,vgg16,vgg19') # either vgg11,13,16,19
     parser.add_argument('--dataset',type=str,help='cifar10,cifar100,imagenet') # either 'cifar10' or 'imagenet'
-    parser.add_argument('--batch_size',type=int,default=256)
+    parser.add_argument('--batch_size',type=int,default=64)
     # have the requirement that if the code is imagenet , then specify a path to dataset
     parser.add_argument('--data_path',type=str,help='only provide if imagenet is specified')
-    parser.add_argument('--num_epochs',type=int,default=100,help='provide number of epochs to run')
+    parser.add_argument('--num_epochs',type=int,default=50,help='provide number of epochs to run')
     args = parser.parse_args()
     return args
 
@@ -55,6 +56,38 @@ def get_dataset(dataset_name):
     elif dataset_name.lower() == 'imagenet':
         raise NotImplementedError
 
+def plot_training(history,args):
+    accuracy = history.history['accuracy']
+    val_accuracy = history.history['val_accuracy']
+    plt.figure()
+    plt.title("Epoch vs Accuracy")
+    plt.plot(accuracy,label='training accuracy')
+    plt.plot(val_accuracy,label='val_accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend(loc='lower right')
+    
+    
+    viz_file = 'accuracy_graph_' + args.dataset.lower() + '_' + args.model.lower() + '_bs' + str(args.batch_size) + '_epochs' + str(args.num_epochs) + '.png'  
+    plt.savefig(viz_file)        
+    plt.show()
+    
+    
+    plt.figure()
+    plt.title("Epoch vs Loss")
+    plt.plot(history.history['loss'],label='training loss')
+    plt.plot(history.history['val_loss'],label='val_loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend(loc='lower right')
+    
+    viz_file2 = 'loss_graph_' + args.dataset.lower() + '_' + args.model.lower() + '_bs' + str(args.batch_size) + '_epochs' + str(args.num_epochs) + '.png'  
+    plt.savefig(viz_file2)        
+    plt.show()
+    
+    
+    
+    
 def main():
     args = get_args()
     num_classes = None
@@ -76,13 +109,15 @@ def main():
 
     model = None
     if args.model.lower() == 'vgg11':
-        model = models2.VGG11_A(num_classes,img_shape)
+        model = models.VGG11_A(num_classes,img_shape)
     elif args.model.lower() == 'vgg13':
-        model = models2.VGG13_B(num_classes,img_shape)
-    elif args.model.lower() == 'vgg16':
-        model = models2.VGG16_D(num_classes,img_shape)
+        model = models.VGG13_B(num_classes,img_shape)
+    elif args.model.lower() == 'vgg16c':
+        model = models.VGG16_C(num_classes,img_shape)
+    elif args.model.lower() == 'vgg16d':
+        model = models.VGG16_D(num_classes,img_shape)
     elif args.model.lower() == 'vgg19':
-        model = models2.VGG19_E(num_classes,img_shape)
+        model = models.VGG19_E(num_classes,img_shape)
     else:
         raise ValueError('Invalid value for the model name' + 'got model name' + args.models)
 
@@ -99,9 +134,16 @@ def main():
     
     print("starting training")
     history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=test_dataset)
-
-    results = model.evaluate(test_dataset)
-    print(results)
+    print('history.history.keys()=',history.history.keys())
+    print('training complete')
+    
+    print('plotting...')
+    plot_training(history,args)
+    print('plotting complete')
+    
+    test_loss, test_acc = model.evaluate(test_dataset)
+    print("test_loss=",test_loss)
+    print("test_acc",test_acc)
 
     train_eval_log_file = open('./train_eval_file_' + args.model + '_' +  args.dataset + '_' + str(args.batch_size) + '.log', 'w')
     
@@ -118,8 +160,8 @@ def main():
  
     train_eval_log_file.write("test results\n")
 
-    train_eval_log_file.write('test_loss' + '=' + str(results[0]) + '\n')
-    train_eval_log_file.write('test_acc' + '=' + str(results[1]) + '\n')
+    train_eval_log_file.write('test_loss' + '=' + str(test_loss) + '\n')
+    train_eval_log_file.write('test_acc' + '=' + str(test_acc) + '\n')
 
     save_to_dir = args.model.lower() + '_' + args.dataset.lower()
     model.save(save_to_dir)
