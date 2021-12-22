@@ -1,6 +1,7 @@
 import tensorflow as tf
 import argparse
 import models
+import bn_vgg
 from tensorflow import keras
 import matplotlib.pyplot as plt
 
@@ -119,6 +120,10 @@ def main():
         model = models.VGG16_D(num_classes,img_shape)
     elif args.model.lower() == 'vgg19':
         model = models.VGG19_E(num_classes,img_shape)
+    elif args.model.lower() == 'bn_vgg16':
+        model = bn_vgg.bn_vgg16d(num_classes,img_shape)
+    elif args.model.lower() == 'bn_vgg19':
+        model = bn_vgg.bn_vgg16d(num_classes,img_shape)
     else:
         raise ValueError('Invalid value for the model name' + 'got model name' + args.model)
 
