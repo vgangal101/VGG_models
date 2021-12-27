@@ -1,27 +1,65 @@
 import tensorflow as tf
 import argparse
+import math
 import models
 import bn_vgg
 from tensorflow import keras
 import matplotlib.pyplot as plt
+from tensorflow.keras.callbacks import LearningRateScheduler
 
-# 1. first prepare code on the cifar10 dataset
-#    make sure you are able to train efectively, build graph training functionality 
-# 2. imagenet is second step ,
+
+# Todos: 
+# 1. Write data augmentation code and evaluate performance 
+#  -- a. should get around 93% accuracy roughly on both bn_vgg16 and bn_vgg19 
+# THIS IS NOW RESOLVED , getting about 80% acc both places 
+
+
+# 2. Write code to process imagenet on single gpu
+#  -- b. should stop training and save a checkpoint when val acc is 50%
+# 3. Write code to utlize data parallel training on gpus in to train imagenet VGG16 and VGG19 , original paper implementation
+
 
 def get_args():
     parser = argparse.ArgumentParser(description='training configurations')
-    parser.add_argument('--model',type=str,help='choices are vgg11,vgg13,vgg16c,vgg16d,vgg19') # either vgg11,13,16,19
-    parser.add_argument('--dataset',type=str,help='cifar10,cifar100,imagenet') # either 'cifar10' or 'imagenet'
+    parser.add_argument('--model',type=str,help='choices are vgg11,vgg13,vgg16c,vgg16d,vgg19') # either vgg11,13,16,19 , now contains batch normalized options as well 
+    parser.add_argument('--dataset',type=str,help='cifar10,cifar100,imagenet')
     parser.add_argument('--batch_size',type=int,default=256)
     # have the requirement that if the code is imagenet , then specify a path to dataset
-    parser.add_argument('--data_path',type=str,help='only provide if imagenet is specified')
+    parser.add_argument('--imgnt_data_path',type=str,help='only provide if imagenet is specified')
     parser.add_argument('--num_epochs',type=int,default=100,help='provide number of epochs to run')
     parser.add_argument('--lr',type=float,default=1e-2,help='learning rate to use')
+    parser.add_argument('--lr_schedule',type=str,default='constant',help='choice of learning rate scheduler')
+    parser.add_argument('--data_aug',type=bool,default=False,help='use data augmentation or not')
     args = parser.parse_args()
     return args
 
 
+
+
+def data_augmentation(ds):
+    """
+    Performs 
+    """
+    AUTOTUNE = tf.data.AUTOTUNE
+    
+    augment = tf.keras.Sequential()
+    augment.add(tf.keras.layers.RandomRotation(15/360))
+    augment.add(tf.keras.layers.RandomWidth(0.1))
+    augment.add(tf.keras.layers.RandomHeight(0.1))
+    augment.add(tf.keras.layers.RandomFlip())
+    
+    
+    ds = ds.map(lambda x, y:(augment(x),y),num_parallel_calls=AUTOTUNE)
+    
+    sample = ds.take(1)
+    
+    for d,l in sample: 
+        print(d.shape)
+    
+    print(sample.shape)
+    #ds = ds.prefetch(buffer_size=AUTOTUNE)
+    
+    return ds
 
 def normalize_image(image,label):
     return tf.cast(image,tf.float32) / 255., label
@@ -31,14 +69,29 @@ def preprocess_dataset(args,train_dataset,test_dataset):
     train_dataset : tf.data.Dataset
     test_dataset : tf.data.Dataset
 
-    should return normalized image data
+    should return normalized image data + any data augmentation as needed. 
     """
-
+    
+    #if args.data_aug:
+    #    train_dataset = data_augmentation(train_dataset)
+   
     train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
     test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
-
-
+    
     return train_dataset, test_dataset
+
+
+def get_imagenet_dataset(args):
+    path_dir = args.imgnt_data_path
+    
+    if 'train' in path_dir: 
+        raise ValueError('Specify the root directory not the train directory for the imagenet dataset')
+    
+    path_train = path_dir + '/train'
+    path_val = path_dir + '/val'
+    
+    
+    
 
 
 def get_dataset(dataset_name):
@@ -95,6 +148,7 @@ def main():
     num_classes = None
     img_shape = None
     dataset_name = args.dataset
+    
     if dataset_name == None:
         raise ValueError('No dataset specified. Exiting')
     elif dataset_name.lower() == 'cifar10':
@@ -121,12 +175,52 @@ def main():
     elif args.model.lower() == 'vgg19':
         model = models.VGG19_E(num_classes,img_shape)
     elif args.model.lower() == 'bn_vgg16':
-        model = bn_vgg.bn_vgg16d(num_classes,img_shape)
+        model = bn_vgg.bn_VGG16D(num_classes,img_shape)
     elif args.model.lower() == 'bn_vgg19':
-        model = bn_vgg.bn_vgg16d(num_classes,img_shape)
+        model = bn_vgg.bn_VGG19E(num_classes,img_shape)
     else:
         raise ValueError('Invalid value for the model name' + 'got model name' + args.model)
 
+        
+    callbacks = []
+    optimizer = None
+    
+    if args.lr_schedule == 'constant':
+        optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr)
+    elif args.lr_schedule == 'time':
+        decay = args.lr / args.num_epochs
+        
+        def lr_time_based_decay(epoch,lr):
+            return lr * 1 / (1 + decay * epoch)
+        lr_callback = LearningRateScheduler(lr_time_based_decay,verbose=1)
+        
+        callbacks.append(lr_callback)
+    
+    elif args.lr_schedule == 'step_decay':
+        
+        initial_learning_rate = args.lr
+        
+        def lr_step_decay(epoch,lr):
+            drop_rate = 0.5
+            epochs_drop = 10.0 
+            return initial_learning_rate * math.pow(drop_rate, math.floor(epoch/epochs_drop))
+    
+        lr_callback = LearningRateScheduler(lr_step_decay,verbose=1)
+        callbacks.append(lr_callback)
+        
+    elif args.lr_schedule == 'exp_decay':
+        initial_learning_rate = args.lr
+            
+        def lr_exp_decay(epoch,lr):
+            k = 0.1 
+            return initial_learning_rate * math.exp(-k*epoch)
+        
+        lr_callback = LearningRateScheduler(lr_exp_decay,verbose=1)
+        callbacks.append(lr_callback)
+    
+    else: 
+        raise ValueError('invalid value for learning rate scheduler got: ', args.lr_scheduler)
+        
     print("preparing data")
     train_dataset, test_dataset = get_dataset(args.dataset)
     train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
@@ -136,7 +230,7 @@ def main():
                   metrics=['accuracy'])
     
     print("starting training")
-    history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=test_dataset)
+    history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=test_dataset,callbacks=callbacks)
     #print('history.history.keys()=',history.history.keys())
     print('training complete')
     
@@ -155,7 +249,7 @@ def main():
     train_eval_log_file.write('test_loss' + '=' + str(test_loss) + '\n')
     train_eval_log_file.write('test_acc' + '=' + str(test_acc) + '\n')
 
-    save_to_dir = args.model.lower() + '_' + args.dataset.lower()
+    save_to_dir = args.model.lower() + '_' + args.dataset.lower() + '_' +  str(args.batch_size)
     model.save(save_to_dir)
     print("training and eval complete")
 
