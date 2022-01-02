@@ -6,12 +6,14 @@ import bn_vgg
 from tensorflow import keras
 import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import LearningRateScheduler
+import numpy as np
+import matplotlib
 
 
 # Todos: 
 # 1. Write data augmentation code and evaluate performance 
 #  -- a. should get around 93% accuracy roughly on both bn_vgg16 and bn_vgg19 
-# THIS IS NOW RESOLVED , getting about 80% acc both places 
+# THIS IS NOW RESOLVED , getting about 80% acc both places -- CAN RETURN TO THIS AFTER IMAGENET PREPARATION CODE IS WRITTEN
 
 
 # 2. Write code to process imagenet on single gpu
@@ -25,14 +27,17 @@ def get_args():
     parser.add_argument('--dataset',type=str,help='cifar10,cifar100,imagenet')
     parser.add_argument('--batch_size',type=int,default=256)
     # have the requirement that if the code is imagenet , then specify a path to dataset
-    parser.add_argument('--imgnt_data_path',type=str,help='only provide if imagenet is specified')
+    parser.add_argument('--imgnt_data_path',type=str,default='/data/petabyte/IMAGENET/Imagenet2012',help='only provide if imagenet is specified')
     parser.add_argument('--num_epochs',type=int,default=100,help='provide number of epochs to run')
     parser.add_argument('--lr',type=float,default=1e-2,help='learning rate to use')
     parser.add_argument('--lr_schedule',type=str,default='constant',help='choice of learning rate scheduler')
+    parser.add_argument('--img_size',type=tuple, default=(224,224,3),help='imagenet crop size')
     parser.add_argument('--data_aug',type=bool,default=False,help='use data augmentation or not')
+    parser.add_argument('--early_stopping', type=bool, default=False, help='use early stopping')
+    parser.add_argument('--train_to_%_accuracy',type=float,default=0.5,help='using early stopping to train to certain percentage')
+    parser.add_argument('--save_checkpoints',type=bool,default=False,help='whether to save checkpoints or not')
     args = parser.parse_args()
     return args
-
 
 
 
@@ -75,8 +80,12 @@ def preprocess_dataset(args,train_dataset,test_dataset):
     #if args.data_aug:
     #    train_dataset = data_augmentation(train_dataset)
    
-    train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
-    test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
+    #train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
+    #test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
+    
+    
+    train_dataset = train_dataset.map(normalize_image)
+    test_dataset = test_dataset.map(normalize_image)
     
     return train_dataset, test_dataset
 
@@ -84,20 +93,32 @@ def preprocess_dataset(args,train_dataset,test_dataset):
 def get_imagenet_dataset(args):
     path_dir = args.imgnt_data_path
     
-    if 'train' in path_dir: 
+    if 'train' in path_dir or 'val' in path_dir : 
         raise ValueError('Specify the root directory not the train directory for the imagenet dataset')
     
     path_train = path_dir + '/train'
     path_val = path_dir + '/val'
     
+    # specify image size ?????? -- lets set it to 224,224,3
     
+    IMG_SIZE = None
+    
+    if args.img_size:
+        IMG_SIZE = args.img_size[:2]
+    
+    train_dataset = tf.keras.utils.image_dataset_from_directory(path_train,image_size=IMG_SIZE,batch_size=args.batch_size)
+    val_dataset = tf.keras.utils.image_dataset_from_directory(path_val,image_size=IMG_SIZE, batch_size=args.batch_size)
+    
+    return train_dataset,val_dataset
     
 
-
-def get_dataset(dataset_name):
+def get_dataset(args):
     # should return a TF dataset object for train, test
     train_dataset = None
     test_dataset = None
+    
+    dataset_name = args.dataset
+    
     if dataset_name.lower() == 'cifar10':
         (x_train,y_train), (x_test,y_test) = tf.keras.datasets.cifar10.load_data()
         train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
@@ -109,7 +130,7 @@ def get_dataset(dataset_name):
         test_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
         return train_dataset,test_dataset
     elif dataset_name.lower() == 'imagenet':
-        raise NotImplementedError
+        return get_imagenet_dataset(args) 
 
 def plot_training(history,args):
     accuracy = history.history['accuracy']
@@ -138,12 +159,14 @@ def plot_training(history,args):
     
     viz_file2 = 'loss_graph_' + args.dataset.lower() + '_' + args.model.lower() + '_bs' + str(args.batch_size) + '_epochs' + str(args.num_epochs) + '.png'  
     plt.savefig(viz_file2)        
-    plt.show()
-    
-    
-    
-    
+    plt.show()        
+        
+
+                  
 def main():
+    
+    print(matplotlib.get_backend())
+    
     args = get_args()
     num_classes = None
     img_shape = None
@@ -158,11 +181,11 @@ def main():
         img_shape = (32,32,3)
         num_classes = 100
     elif dataset_name.lower() == 'imagenet':
-        raise NotImplementedError
-        #num_classes = 1000
+        img_shape = (224,224,3)
+        num_classes = 1000
     else:
         raise ValueError('Invalid dataset specified, dataset specified=', args.dataset)
-
+       
     model = None
     if args.model.lower() == 'vgg11':
         model = models.VGG11_A(num_classes,img_shape)
@@ -221,8 +244,19 @@ def main():
     else: 
         raise ValueError('invalid value for learning rate scheduler got: ', args.lr_scheduler)
         
+    
+    
+    # early stopping 
+    
+    if args.early_stopping: 
+        ea = tf.keras.callbacks.EarlyStopping(monitor='val_acc',patience=10,verbose=2)
+    
+        
+        
     print("preparing data")
-    train_dataset, test_dataset = get_dataset(args.dataset)
+    train_dataset, test_dataset = get_dataset(args)    
+    
+    # potentially include data augmentation as a part of preprocessing ? 
     train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
 
     model.compile(optimizer=keras.optimizers.SGD(learning_rate=args.lr,momentum=0.9),

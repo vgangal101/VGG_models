@@ -19,7 +19,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 def get_args():
     parser = argparse.ArgumentParser(description='training configurations')
-    parser.add_argument('--model',type=str,help='choices are vgg11,vgg13,vgg16c,vgg16d,vgg19') # either vgg11,13,16,19 , now contains batch normalized options as well 
+    parser.add_argument('--model',type=str,help='choices are vgg11,vgg13,vgg16,vgg16,vgg19') # either vgg11,13,16,19 , now contains batch normalized options as well 
     parser.add_argument('--dataset',type=str,help='cifar10,cifar100,imagenet')
     parser.add_argument('--batch_size',type=int,default=256)
     # have the requirement that if the code is imagenet , then specify a path to dataset
@@ -118,7 +118,7 @@ def main():
         raise NotImplementedError
         #num_classes = 1000
     else:
-        raise ValueError('Invalid dataset specified, dataset specified=', args.dataset)
+        raise ValueError('Invalid dataset specified, dataset specified= ', args.dataset)
 
     model = None
     if args.model.lower() == 'bn_vgg16':
@@ -126,7 +126,7 @@ def main():
     elif args.model.lower() == 'bn_vgg19':
         model = bn_vgg.bn_VGG19E(num_classes,img_shape)
     else:
-        raise ValueError('Invalid value for the model name' + 'got model name' + args.model)
+        raise ValueError('Invalid value for the model name' + 'got model name= ' + args.model)
 
         
     callbacks = []
