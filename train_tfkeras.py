@@ -16,9 +16,26 @@ import matplotlib
 # THIS IS NOW RESOLVED , getting about 80% acc both places -- CAN RETURN TO THIS AFTER IMAGENET PREPARATION CODE IS WRITTEN
 
 
-# 2. Write code to process imagenet on single gpu
-#  -- b. should stop training and save a checkpoint when val acc is 50%
+# 2. Write code to process imagenet on single gpu DONE 
+#  -- b. should stop training and save a checkpoint when val acc is 50% IN PROGRESS 
+#      -- b1 need code for imagenet data aug 
+
+
+
+
 # 3. Write code to utlize data parallel training on gpus in to train imagenet VGG16 and VGG19 , original paper implementation
+
+
+
+#https://towardsdatascience.com/neural-network-with-tensorflow-how-to-stop-training-using-callback-5c8d575c18a9
+class at_acc_thresh(tf.keras.callbacks.Callback):
+     
+    
+    def on_epoch_end(self,epoch,logs={}):
+        if (logs.get('acc') > ACCURACY
+
+
+
 
 
 def get_args():
@@ -38,7 +55,6 @@ def get_args():
     parser.add_argument('--save_checkpoints',type=bool,default=False,help='whether to save checkpoints or not')
     args = parser.parse_args()
     return args
-
 
 
 def data_augmentation(ds):
@@ -75,17 +91,16 @@ def preprocess_dataset(args,train_dataset,test_dataset):
     test_dataset : tf.data.Dataset
 
     should return normalized image data + any data augmentation as needed. 
+    
+    THIS PORTION HERE REQUIRES ATTENTION
     """
-    
-    #if args.data_aug:
-    #    train_dataset = data_augmentation(train_dataset)
-   
-    #train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
-    #test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
-    
-    
-    train_dataset = train_dataset.map(normalize_image)
-    test_dataset = test_dataset.map(normalize_image)
+
+    if args.dataset == 'imagenet':
+        train_dataset = train_dataset.map(normalize_image)
+        test_dataset = test_dataset.map(normalize_image)
+    else:     
+        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
+        test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
     
     return train_dataset, test_dataset
 
