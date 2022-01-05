@@ -29,14 +29,16 @@ class stop_acc_thresh(tf.keras.callbacks.Callback):
     """
     callback to stop training when a certain validation accuracy is reached
     """
-    def __init__(self,acc)
+    def __init__(self,acc):
         super(stop_acc_thresh,self).init__()
         self.acc_thresh = acc
 
     def on_epoch_end(self,epoch,logs={}):
-        if (logs.get('val_acc') > self.acc_thresh:
+        if (logs.get('val_acc') > self.acc_thresh):
             print("\n Reached %2.2f accuracy" %(self.acc_thresh*100))
             self.model.stop_training = True
+        print('val acc = %2.2f' %(logs.get('val_acc')))
+        
 
 
 def get_args():
@@ -266,9 +268,8 @@ def main():
         callbacks.append(ea)
 
     if args.save_checkpoints:
-        cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=args.checkpoint_dir,monitor='val_acc',save_freq=5,verbose=1)
+        cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=args.checkpoint_dir,monitor='val_acc',save_freq='epoch',verbose=1)
         callbacks.append(cp_callback)
-
 
 
     print("preparing data")
@@ -277,6 +278,8 @@ def main():
     # potentially include data augmentation as a part of preprocessing ?
     train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
 
+    print('data preparation complete')
+    
     model.compile(optimizer=keras.optimizers.SGD(learning_rate=args.lr,momentum=0.9),
                   loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   metrics=['accuracy'])
