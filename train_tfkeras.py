@@ -15,13 +15,9 @@ import matplotlib
 #  -- a. should get around 93% accuracy roughly on both bn_vgg16 and bn_vgg19
 # THIS IS NOW RESOLVED , getting about 80% acc both places -- CAN RETURN TO THIS AFTER IMAGENET PREPARATION CODE IS WRITTEN
 
-
 # 2. Write code to process imagenet on single gpu DONE
 #  -- b. should stop training and save a checkpoint when val acc is 50% IN PROGRESS
 #      -- b1 need code for imagenet data aug
-
-
-
 
 # 3. Write code to utlize data parallel training on gpus in to train imagenet VGG16 and VGG19 , original paper implementation
 
@@ -34,11 +30,11 @@ class stop_acc_thresh(tf.keras.callbacks.Callback):
         self.acc_thresh = acc
 
     def on_epoch_end(self,epoch,logs={}):
-        if (logs.get('val_acc') > self.acc_thresh):
+        if (logs.get('val_accuracy') > self.acc_thresh):
             print("\n Reached %2.2f accuracy" %(self.acc_thresh*100))
             self.model.stop_training = True
         print('val acc = %2.2f' %(logs.get('val_acc')))
-        
+
 
 
 def get_args():
@@ -279,7 +275,7 @@ def main():
     train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
 
     print('data preparation complete')
-    
+
     model.compile(optimizer=keras.optimizers.SGD(learning_rate=args.lr,momentum=0.9),
                   loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   metrics=['accuracy'])
