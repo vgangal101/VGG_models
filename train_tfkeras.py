@@ -51,7 +51,7 @@ def get_args():
     parser.add_argument('--img_size',type=tuple, default=(224,224,3),help='imagenet crop size')
     parser.add_argument('--data_aug',type=bool,default=False,help='use data augmentation or not')
     parser.add_argument('--early_stopping', type=bool, default=False, help='use early stopping')
-    parser.add_argument('--train_to_%_accuracy',type=float,default=0.5,help='using early stopping to train to certain percentage')
+    parser.add_argument('--train_to_accuracy',type=float,default=0,help='using early stopping to train to certain percentage')
     parser.add_argument('--save_checkpoints',type=bool,default=False,help='whether to save checkpoints or not')
     parser.add_argument('--checkpoint_dir',type=str,default='./checkpoints',help='where to save checkpoints')
     args = parser.parse_args()
@@ -261,10 +261,16 @@ def main():
     else:
         raise ValueError('invalid value for learning rate scheduler got: ', args.lr_scheduler)
     
+    
+    
+    
     #ReduceLROnPlateau callback 
     reduce_lr_plat = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy',factor=0.1,patience=args.lr_plat_patience)
     callbacks.append(reduce_lr_plat)
     
+    if args.train_to_accuracy != 0: 
+        cb = stop_acc_thresh(args.train_to_accuracy)
+        callbacks.append(cb
         
     # early stopping
     if args.early_stopping:
@@ -274,7 +280,6 @@ def main():
     if args.save_checkpoints:
         cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=args.checkpoint_dir,monitor='val_acc',save_freq='epoch',verbose=1)
         callbacks.append(cp_callback)
-
 
     print("preparing data")
     train_dataset, test_dataset = get_dataset(args)
