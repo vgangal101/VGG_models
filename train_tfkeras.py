@@ -47,6 +47,7 @@ def get_args():
     parser.add_argument('--num_epochs',type=int,default=100,help='provide number of epochs to run')
     parser.add_argument('--lr',type=float,default=1e-2,help='learning rate to use')
     parser.add_argument('--lr_schedule',type=str,default='constant',help='choice of learning rate scheduler')
+    parser.add_argument('--lr_plat_patience',type=int,default=5,help='patience of epochs before reducing lr')
     parser.add_argument('--img_size',type=tuple, default=(224,224,3),help='imagenet crop size')
     parser.add_argument('--data_aug',type=bool,default=False,help='use data augmentation or not')
     parser.add_argument('--early_stopping', type=bool, default=False, help='use early stopping')
@@ -84,6 +85,9 @@ def data_augmentation(ds):
 
 def normalize_image(image,label):
     return tf.cast(image,tf.float32) / 255., label
+
+def get_mean_rgb_val():
+    pass
 
 def preprocess_dataset(args,train_dataset,test_dataset):
     """
@@ -256,9 +260,13 @@ def main():
 
     else:
         raise ValueError('invalid value for learning rate scheduler got: ', args.lr_scheduler)
-
+    
+    #ReduceLROnPlateau callback 
+    reduce_lr_plat = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy',factor=0.1,patience=args.lr_plat_patience)
+    callbacks.append(reduce_lr_plat)
+    
+        
     # early stopping
-
     if args.early_stopping:
         ea = tf.keras.callbacks.EarlyStopping(monitor='val_acc',patience=10,verbose=2)
         callbacks.append(ea)
