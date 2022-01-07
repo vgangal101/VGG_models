@@ -1,2 +1,14 @@
 https://github.com/geifmany/cifar-vgg/blob/master/cifar10vgg.py
 https://medium.com/analytics-vidhya/introduction-to-computer-vision-with-baseline-vgg-blocks-on-the-cifar-10-dataset-731d19439922
+
+
+imagenet data preparation:
+https://machinelearningmastery.com/best-practices-for-preparing-and-augmenting-image-data-for-convolutional-neural-networks/
+
+
+
+Data Preparation help
+
+https://stackoverflow.com/questions/42160782/tensorflow-how-to-subtract-a-mean-image/42161461
+
+https://stackoverflow.com/questions/54476186/tensorflow-keras-mean-image-subtraction
