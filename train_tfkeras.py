@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import LearningRateScheduler
 import numpy as np
 import matplotlib
-from tensorflow.keras.prepreprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
 
@@ -29,7 +29,7 @@ class stop_acc_thresh(tf.keras.callbacks.Callback):
     callback to stop training when a certain validation accuracy is reached
     """
     def __init__(self,acc):
-        super(stop_acc_thresh,self).init__()
+        super(stop_acc_thresh,self).__init__()
         self.acc_thresh = acc
 
     def on_epoch_end(self,epoch,logs={}):
@@ -292,7 +292,7 @@ def main():
     
     if args.train_to_accuracy != 0: 
         cb = stop_acc_thresh(args.train_to_accuracy)
-        callbacks.append(cb
+        callbacks.append(cb)
         
     # early stopping
     if args.early_stopping:
