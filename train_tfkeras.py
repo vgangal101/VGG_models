@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import LearningRateScheduler
 import numpy as np
 import matplotlib
+from tensorflow.keras.prepreprocessing.image import ImageDataGenerator
+
+
 
 
 # Todos:
@@ -58,36 +61,58 @@ def get_args():
     return args
 
 
-def data_augmentation(ds):
+
+def imgnt_preproc_data_aug(args):
     """
-    Performs
+    Return the appropriate ImageDataGenerator
     """
-    AUTOTUNE = tf.data.AUTOTUNE
+    
+    train_datagen = ImageDataGenerator(
+                        featurewise_center=True,
+                        horizontal_flip=True)
+    
+    val_datagen = ImageDataGenerator(featurewise_center=True)
+    
+    return train_datagen, val_datagen
+    
 
-    augment = tf.keras.Sequential()
-    augment.add(tf.keras.layers.RandomRotation(15/360))
-    augment.add(tf.keras.layers.RandomWidth(0.1))
-    augment.add(tf.keras.layers.RandomHeight(0.1))
-    augment.add(tf.keras.layers.RandomFlip())
-
-
-    ds = ds.map(lambda x, y:(augment(x),y),num_parallel_calls=AUTOTUNE)
-
-    sample = ds.take(1)
-
-    for d,l in sample:
-        print(d.shape)
-
-    print(sample.shape)
-    #ds = ds.prefetch(buffer_size=AUTOTUNE)
-
-    return ds
+    
 
 def normalize_image(image,label):
     return tf.cast(image,tf.float32) / 255., label
 
-def get_mean_rgb_val():
-    pass
+
+def preprocess_imagenet(args):
+    """
+    train_dataset : tf.data.Dataset
+    test_dataset : tf.data.Dataset
+    """
+    
+    train_datagen, val_datagen = imgnt_preproc_data_aug(args)
+    
+    train_dir = args.imgnt_data_path + '/train/'
+    val_dir = args.imgnt_data_path + '/val/'
+    
+    print('setting up train and val generators')
+    train_generator = train_datagen.flow_from_directory(train_dir,target_size=args.img_size[:2],batch_size=args.batch_size,class_mode='sparse')
+    val_generator = val_datagen.flow_from_directory(val_dir,target_size=args.img_size[:2],batch_size=args.batch_size,class_mode='sparse')
+    print("generators setup")
+    
+    
+    print('constructing into tf.data.dataset')
+    print('constructing train_dataset from generator')
+    train_dataset = tf.data.Dataset.from_generator(train_generator)
+    print('train_dataset complete')
+    print('constructing val_dataset from generator')
+    val_dataset = tf.data.Dataset.from_generator(val_generator)
+    print('val_dataset complete')
+    
+    # can turn this back on as needed 
+    #train_dataset = train_dataset.map(normalize)
+    #val_dataset = val_dataset.map(normalize)
+    
+    return train_dataset, val_dataset
+
 
 def preprocess_dataset(args,train_dataset,test_dataset):
     """
@@ -95,16 +120,16 @@ def preprocess_dataset(args,train_dataset,test_dataset):
     test_dataset : tf.data.Dataset
 
     should return normalized image data + any data augmentation as needed.
-
-    THIS PORTION HERE REQUIRES ATTENTION
     """
-
-    if args.dataset == 'imagenet':
-        train_dataset = train_dataset.map(normalize_image)
-        test_dataset = test_dataset.map(normalize_image)
-    else:
+    
+    if args.dataset == 'cifar10':
+        # cifar10 specific processing, double check this !!!!!!
         train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
         test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
+    elif args.dataset == 'cifar100': 
+        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
+        test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
+
 
     return train_dataset, test_dataset
 
@@ -115,20 +140,17 @@ def get_imagenet_dataset(args):
     if 'train' in path_dir or 'val' in path_dir :
         raise ValueError('Specify the root directory not the train directory for the imagenet dataset')
 
-    path_train = path_dir + '/train'
-    path_val = path_dir + '/val'
+#     IMG_SIZE = None
 
-    # specify image size ?????? -- lets set it to 224,224,3
+#     if args.img_size:
+#         IMG_SIZE = args.img_size[:2]
 
-    IMG_SIZE = None
+#     train_dataset = tf.keras.utils.image_dataset_from_directory(path_train,image_size=IMG_SIZE,batch_size=args.batch_size)
+#     val_dataset = tf.keras.utils.image_dataset_from_directory(path_val,image_size=IMG_SIZE, batch_size=args.batch_size)
 
-    if args.img_size:
-        IMG_SIZE = args.img_size[:2]
 
-    train_dataset = tf.keras.utils.image_dataset_from_directory(path_train,image_size=IMG_SIZE,batch_size=args.batch_size)
-    val_dataset = tf.keras.utils.image_dataset_from_directory(path_val,image_size=IMG_SIZE, batch_size=args.batch_size)
 
-    return train_dataset,val_dataset
+    return preprocess_imagenet(args)
 
 
 def get_dataset(args):
@@ -142,12 +164,12 @@ def get_dataset(args):
         (x_train,y_train), (x_test,y_test) = tf.keras.datasets.cifar10.load_data()
         train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
         test_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
-        return train_dataset, test_dataset
+        return preprocess_dataset(args,train_dataset,test_dataset)
     elif dataset_name.lower() == 'cifar100':
         (x_train,y_train), (x_test,y_test) = tf.keras.datasets.cifar100.load_data()
         train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
         test_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
-        return train_dataset,test_dataset
+        return preprocess_dataset(args,train_dataset,test_dataset)
     elif dataset_name.lower() == 'imagenet':
         return get_imagenet_dataset(args)
 
