@@ -1,3 +1,4 @@
+
 https://github.com/geifmany/cifar-vgg/blob/master/cifar10vgg.py
 https://medium.com/analytics-vidhya/introduction-to-computer-vision-with-baseline-vgg-blocks-on-the-cifar-10-dataset-731d19439922
 
@@ -25,3 +26,15 @@ https://towardsdatascience.com/a-beginners-guide-to-image-augmentations-in-machi
 
 Look at how they went about the problem !!!
 https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-photos-of-dogs-and-cats/
+
+
+--------------------
+perhaps look here : https://github.com/keras-team/keras/blob/v2.7.0/keras/applications/imagenet_utils.py
+
+
+CONTAINS mean RGB obtain code 
+https://pytorch.org/vision/stable/models.html
+
+CHeck this as well !!
+https://github.com/pytorch/examples/blob/42e5b996718797e45c46a25c55b031e6768f8440/imagenet/main.py#L89-L101
+https://github.com/pytorch/examples/blob/42e5b996718797e45c46a25c55b031e6768f8440/imagenet/main.py#L89-L101
