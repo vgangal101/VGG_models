@@ -38,3 +38,7 @@ https://pytorch.org/vision/stable/models.html
 CHeck this as well !!
 https://github.com/pytorch/examples/blob/42e5b996718797e45c46a25c55b031e6768f8440/imagenet/main.py#L89-L101
 https://github.com/pytorch/examples/blob/42e5b996718797e45c46a25c55b031e6768f8440/imagenet/main.py#L89-L101
+
+look here for imagenet values [ do verify tho ] 
+https://github.com/tensorpack/tensorpack/issues/789
+
