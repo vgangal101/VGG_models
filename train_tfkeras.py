@@ -90,31 +90,27 @@ def preprocess_imgnt(args, train_dataset, val_dataset):
     val_dataset = val_dataset.map(normalize_image)
     
     return train_dataset,val_dataset
-    
-    
-def data_aug_imgnt(args,train_dataset):
+
+
+
+"""
+def data_aug_hor_flip(img, label):
     horizontal_flip = tf.keras.layers.RandomFlip(mode='horizontal')
-    train_dataset = train_dataset.map(horizontal_flip)
-    return train_dataset
+    return horizontal_flip(img), label
+"""
+
+def data_aug_imgnt1(args,train_dataset):
     
+    #data_aug = keras.Sequential([keras.layers.RandomFlip('horizontal')])
+    train_dataset = train_dataset.map(lambda img, label: (tf.image.random_flip_left_right(img,seed=0),label))
+    return train_dataset
 
-def preprocess_dataset(args,train_dataset,test_dataset):
-    """
-    train_dataset : tf.data.Dataset
-    test_dataset : tf.data.Dataset
+def data_aug_imgnt2(args,train_dataset):
+    data_aug = keras.Sequential([keras.layers.RandomFlip("horizontal")])
+    train_dataset = train_dataset.map(lambda img, label: (data_aug(img),label)) 
+    return train_dataset
 
-    should return normalized image data + any data augmentation as needed.
-    """    
-    if args.dataset == 'cifar10':
-        # cifar10 specific processing, double check this !!!!!!
-        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
-        val_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
-    elif args.dataset == 'cifar100': 
-        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
-        test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
-
-    return train_dataset, val_dataset
-
+#def
 
 def get_imagenet_dataset(args):
     path_dir = args.imgnt_data_path
@@ -133,6 +129,25 @@ def get_imagenet_dataset(args):
 
     train_dataset = tf.keras.utils.image_dataset_from_directory(path_train,image_size=IMG_SIZE,batch_size=args.batch_size)
     val_dataset = tf.keras.utils.image_dataset_from_directory(path_val,image_size=IMG_SIZE, batch_size=args.batch_size)
+
+    return train_dataset, val_dataset
+
+    
+    
+def preprocess_dataset(args,train_dataset,test_dataset):
+    """
+    train_dataset : tf.data.Dataset
+    test_dataset : tf.data.Dataset
+
+    should return normalized image data + any data augmentation as needed.
+    """    
+    if args.dataset == 'cifar10':
+        # cifar10 specific processing, double check this !!!!!!
+        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
+        val_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
+    elif args.dataset == 'cifar100': 
+        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
+        test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
 
     return train_dataset, val_dataset
 
@@ -158,7 +173,7 @@ def get_dataset(args):
     elif dataset_name.lower() == 'imagenet':
         train_dataset, test_dataset = get_imagenet_dataset(args)
         prcssd_train_dataset, prcssd_test_dataset = preprocess_imgnt(args,train_dataset,test_dataset)
-        data_aug_train_dataset = data_aug_imgnt(args,prcssd_train_dataset)
+        data_aug_train_dataset = data_aug_imgnt2(args,prcssd_train_dataset)
         return data_aug_train_dataset, prcssd_test_dataset
 
 def plot_training(history,args):
@@ -291,8 +306,8 @@ def main():
     print("preparing data")
 
     train_dataset, val_dataset = get_dataset(args)
-    train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
-    val_dataset = val_dataset.prefetch(tf.data.AUTOTUNE)
+    #train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
+    #val_dataset = val_dataset.prefetch(tf.data.AUTOTUNE)
     
     print('data preparation complete')
 
