@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import scipy
+import atexit
 
 
 
@@ -36,7 +37,7 @@ class stop_acc_thresh(tf.keras.callbacks.Callback):
         if (logs.get('val_accuracy') > self.acc_thresh):
             print("\n Reached %2.2f accuracy" %(self.acc_thresh*100))
             self.model.stop_training = True
-        print('val accuracy = %2.2f' %(logs.get('val_acc')))
+        print('val accuracy = %2.2f' %(logs.get('val_accuracy')))
 
 
 
@@ -59,8 +60,6 @@ def get_args():
     parser.add_argument('--checkpoint_dir',type=str,default='./checkpoints',help='where to save checkpoints')
     args = parser.parse_args()
     return args
-
-
 
     
 
@@ -92,13 +91,6 @@ def preprocess_imgnt(args, train_dataset, val_dataset):
     return train_dataset,val_dataset
 
 
-
-"""
-def data_aug_hor_flip(img, label):
-    horizontal_flip = tf.keras.layers.RandomFlip(mode='horizontal')
-    return horizontal_flip(img), label
-"""
-
 def data_aug_imgnt1(args,train_dataset):
     
     #data_aug = keras.Sequential([keras.layers.RandomFlip('horizontal')])
@@ -110,7 +102,6 @@ def data_aug_imgnt2(args,train_dataset):
     train_dataset = train_dataset.map(lambda img, label: (data_aug(img),label)) 
     return train_dataset
 
-#def
 
 def get_imagenet_dataset(args):
     path_dir = args.imgnt_data_path
@@ -228,25 +219,6 @@ def main():
     else:
         raise ValueError('Invalid dataset specified, dataset specified=', args.dataset)
 
-    model = None
-    if args.model.lower() == 'vgg11':
-        model = models.VGG11_A(num_classes,img_shape)
-    elif args.model.lower() == 'vgg13':
-        model = models.VGG13_B(num_classes,img_shape)
-    elif args.model.lower() == 'vgg16c':
-        model = models.VGG16_C(num_classes,img_shape)
-    elif args.model.lower() == 'vgg16d':
-        model = models.VGG16_D(num_classes,img_shape)
-    elif args.model.lower() == 'vgg19':
-        model = models.VGG19_E(num_classes,img_shape)
-    elif args.model.lower() == 'bn_vgg16':
-        model = bn_vgg.bn_VGG16D(num_classes,img_shape)
-    elif args.model.lower() == 'bn_vgg19':
-        model = bn_vgg.bn_VGG19E(num_classes,img_shape)
-    else:
-        raise ValueError('Invalid value for the model name' + 'got model name' + args.model)
-
-
     callbacks = []
     optimizer = None
 
@@ -296,7 +268,7 @@ def main():
         
     # early stopping
     if args.early_stopping:
-        ea = tf.keras.callbacks.EarlyStopping(monitor='val_acc',patience=10,verbose=2)
+        ea = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',patience=10,verbose=2)
         callbacks.append(ea)
 
     if args.save_checkpoints:
@@ -306,14 +278,41 @@ def main():
     print("preparing data")
 
     train_dataset, val_dataset = get_dataset(args)
-    #train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
-    #val_dataset = val_dataset.prefetch(tf.data.AUTOTUNE)
+    BUFFER_SIZE = 10000
+    train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE).cache().shuffle(BUFFER_SIZE)
+    val_dataset = val_dataset.prefetch(tf.data.AUTOTUNE)
     
     print('data preparation complete')
-
-    model.compile(optimizer=keras.optimizers.SGD(learning_rate=args.lr,momentum=0.9),
-                  loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                  metrics=['accuracy'])
+    
+    print('setting up distribution strategy')
+    strategy = tf.distribute.MirroredStrategy()
+    
+    print('preparing model')
+    with strategy.scope():
+        model = None
+        if args.model.lower() == 'vgg11':
+            model = models.VGG11_A(num_classes,img_shape)
+        elif args.model.lower() == 'vgg13':
+            model = models.VGG13_B(num_classes,img_shape)
+        elif args.model.lower() == 'vgg16c':
+            model = models.VGG16_C(num_classes,img_shape)
+        elif args.model.lower() == 'vgg16d':
+            model = models.VGG16_D(num_classes,img_shape)
+        elif args.model.lower() == 'vgg19':
+            model = models.VGG19_E(num_classes,img_shape)
+        elif args.model.lower() == 'bn_vgg16':
+            model = bn_vgg.bn_VGG16D(num_classes,img_shape)
+        elif args.model.lower() == 'bn_vgg19':
+            model = bn_vgg.bn_VGG19E(num_classes,img_shape)
+        else:
+            raise ValueError('Invalid value for the model name' + 'got model name' + args.model)
+        
+        print('model is ready, model chosen=',args.model.lower())
+        
+        print('compiling model with essential necessities ....')
+        model.compile(optimizer=keras.optimizers.SGD(learning_rate=args.lr,momentum=0.9),
+                      loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                      metrics=['accuracy'])
 
     print("starting training")
     history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=val_dataset,callbacks=callbacks)
@@ -338,6 +337,7 @@ def main():
     save_to_dir = args.model.lower() + '_' + args.dataset.lower() + '_' +  str(args.batch_size)
     model.save(save_to_dir)
     print("training and eval complete")
+    atexit.register(strategy._extended._collective_ops._pool.close)
 
 
 if __name__ == '__main__':
