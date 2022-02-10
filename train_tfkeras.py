@@ -1,40 +1,16 @@
+import numpy as np
 import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.callbacks import LearningRateScheduler
 import argparse
 import math
-import models
-import bn_vgg
-from tensorflow import keras
 import matplotlib.pyplot as plt
-from tensorflow.keras.callbacks import LearningRateScheduler
-import numpy as np
-import matplotlib
 
-
-# Todos:
-# 1. Write data augmentation code and evaluate performance
-#  -- a. should get around 93% accuracy roughly on both bn_vgg16 and bn_vgg19
-# THIS IS NOW RESOLVED , getting about 80% acc both places -- CAN RETURN TO THIS AFTER IMAGENET PREPARATION CODE IS WRITTEN
-
-# 2. Write code to process imagenet on single gpu DONE
-#  -- b. should stop training and save a checkpoint when val acc is 50% IN PROGRESS
-#      -- b1 need code for imagenet data aug
-
-# 3. Write code to utlize data parallel training on gpus in to train imagenet VGG16 and VGG19 , original paper implementation
-
-class stop_acc_thresh(tf.keras.callbacks.Callback):
-    """
-    callback to stop training when a certain validation accuracy is reached
-    """
-    def __init__(self,acc):
-        super(stop_acc_thresh,self).init__()
-        self.acc_thresh = acc
-
-    def on_epoch_end(self,epoch,logs={}):
-        if (logs.get('val_accuracy') > self.acc_thresh):
-            print("\n Reached %2.2f accuracy" %(self.acc_thresh*100))
-            self.model.stop_training = True
-        print('val acc = %2.2f' %(logs.get('val_acc')))
-
+# training relevant imports
+from models import bn_vgg, paper_models, keras_models
+from train_utils import stop_acc_threshold
+from data_augmentation import imgnt_data_aug, cifar10_data_aug, cifar100_data_aug
+from preprocessing import imgnt_preproc, cifar10_preproc, cifar100_preproc
 
 
 def get_args():
@@ -46,9 +22,10 @@ def get_args():
     parser.add_argument('--imgnt_data_path',type=str,default='/data/petabyte/IMAGENET/Imagenet2012',help='only provide if imagenet is specified')
     parser.add_argument('--num_epochs',type=int,default=100,help='provide number of epochs to run')
     parser.add_argument('--lr',type=float,default=1e-2,help='learning rate to use')
+    parser.add_argument('--momentum',type=float,default=0.9,help='value for momentum')
     parser.add_argument('--lr_schedule',type=str,default='constant',help='choice of learning rate scheduler')
     parser.add_argument('--img_size',type=tuple, default=(224,224,3),help='imagenet crop size')
-    parser.add_argument('--data_aug',type=bool,default=False,help='use data augmentation or not')
+    parser.add_argument('--data_aug',type=bool,default=True,help='use data augmentation or not')
     parser.add_argument('--early_stopping', type=bool, default=False, help='use early stopping')
     parser.add_argument('--train_to_%_accuracy',type=float,default=0.5,help='using early stopping to train to certain percentage')
     parser.add_argument('--save_checkpoints',type=bool,default=False,help='whether to save checkpoints or not')
@@ -57,33 +34,6 @@ def get_args():
     return args
 
 
-def data_augmentation(ds):
-    """
-    Performs
-    """
-    AUTOTUNE = tf.data.AUTOTUNE
-
-    augment = tf.keras.Sequential()
-    augment.add(tf.keras.layers.RandomRotation(15/360))
-    augment.add(tf.keras.layers.RandomWidth(0.1))
-    augment.add(tf.keras.layers.RandomHeight(0.1))
-    augment.add(tf.keras.layers.RandomFlip())
-
-
-    ds = ds.map(lambda x, y:(augment(x),y),num_parallel_calls=AUTOTUNE)
-
-    sample = ds.take(1)
-
-    for d,l in sample:
-        print(d.shape)
-
-    print(sample.shape)
-    #ds = ds.prefetch(buffer_size=AUTOTUNE)
-
-    return ds
-
-def normalize_image(image,label):
-    return tf.cast(image,tf.float32) / 255., label
 
 def preprocess_dataset(args,train_dataset,test_dataset):
     """
@@ -96,11 +46,11 @@ def preprocess_dataset(args,train_dataset,test_dataset):
     """
 
     if args.dataset == 'imagenet':
-        train_dataset = train_dataset.map(normalize_image)
-        test_dataset = test_dataset.map(normalize_image)
-    else:
-        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
-        test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
+        train_dataset, test_dataset = imgnt_preproc(train_dataset,test_dataset)
+    elif args.dataset == 'cifar10':
+        train_dataset, test_dataset = cifar10_preproc(train_dataset,test_dataset)
+    elif args.dataset == 'cifar100':
+        train_dataset, test_dataset = cifar100_preproc(train_dataset,test_dataset)
 
     return train_dataset, test_dataset
 
@@ -116,10 +66,8 @@ def get_imagenet_dataset(args):
 
     # specify image size ?????? -- lets set it to 224,224,3
 
-    IMG_SIZE = None
+    IMG_SIZE = args.img_size[:2]
 
-    if args.img_size:
-        IMG_SIZE = args.img_size[:2]
 
     train_dataset = tf.keras.utils.image_dataset_from_directory(path_train,image_size=IMG_SIZE,batch_size=args.batch_size)
     val_dataset = tf.keras.utils.image_dataset_from_directory(path_val,image_size=IMG_SIZE, batch_size=args.batch_size)
@@ -146,6 +94,7 @@ def get_dataset(args):
         return train_dataset,test_dataset
     elif dataset_name.lower() == 'imagenet':
         return get_imagenet_dataset(args)
+
 
 def plot_training(history,args):
     accuracy = history.history['accuracy']
@@ -176,11 +125,29 @@ def plot_training(history,args):
     plt.savefig(viz_file2)
     plt.show()
 
+def get_model(args, num_classes, img_shape):
+    model = None
+    if args.model.lower() == 'paper_vgg11':
+        model = paper_models.VGG11_A(num_classes,img_shape)
+    elif args.model.lower() == 'paper_vgg13':
+        model = paper_models.VGG13_B(num_classes,img_shape)
+    elif args.model.lower() == 'paper_vgg16c':
+        model = paper_models.VGG16_C(num_classes,img_shape)
+    elif args.model.lower() == 'paper_vgg16d':
+        model = paper_models.VGG16_D(num_classes,img_shape)
+    elif args.model.lower() == 'paper_vgg19':
+        model = paper_models.VGG19_E(num_classes,img_shape)
+    elif args.model.lower() == 'bn_vgg16':
+        model = bn_vgg.bn_VGG16D(num_classes,img_shape)
+    elif args.model.lower() == 'bn_vgg19':
+        model = bn_vgg.bn_VGG19E(num_classes,img_shape)
+    else:
+        raise ValueError('Invalid value for the model name' + 'got model name' + args.model)
+
+    return model
 
 
-def main():
-
-    args = get_args()
+def get_dataset_props(args):
     num_classes = None
     img_shape = None
     dataset_name = args.dataset
@@ -199,32 +166,21 @@ def main():
     else:
         raise ValueError('Invalid dataset specified, dataset specified=', args.dataset)
 
-    model = None
-    if args.model.lower() == 'vgg11':
-        model = models.VGG11_A(num_classes,img_shape)
-    elif args.model.lower() == 'vgg13':
-        model = models.VGG13_B(num_classes,img_shape)
-    elif args.model.lower() == 'vgg16c':
-        model = models.VGG16_C(num_classes,img_shape)
-    elif args.model.lower() == 'vgg16d':
-        model = models.VGG16_D(num_classes,img_shape)
-    elif args.model.lower() == 'vgg19':
-        model = models.VGG19_E(num_classes,img_shape)
-    elif args.model.lower() == 'bn_vgg16':
-        model = bn_vgg.bn_VGG16D(num_classes,img_shape)
-    elif args.model.lower() == 'bn_vgg19':
-        model = bn_vgg.bn_VGG19E(num_classes,img_shape)
-    else:
-        raise ValueError('Invalid value for the model name' + 'got model name' + args.model)
+    return num_classes,img_shape
 
 
+def get_callbacks_and_optimizer(args):
     callbacks = []
     optimizer = None
+    momentum = args.momentum
+
+
 
     if args.lr_schedule == 'constant':
-        optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr)
+        optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr,momentum=momentum)
     elif args.lr_schedule == 'time':
         decay = args.lr / args.num_epochs
+        optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr,momentum=momentum)
 
         def lr_time_based_decay(epoch,lr):
             return lr * 1 / (1 + decay * epoch)
@@ -233,7 +189,7 @@ def main():
         callbacks.append(lr_callback)
 
     elif args.lr_schedule == 'step_decay':
-
+        optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr,momentum=momentum)
         initial_learning_rate = args.lr
 
         def lr_step_decay(epoch,lr):
@@ -245,6 +201,7 @@ def main():
         callbacks.append(lr_callback)
 
     elif args.lr_schedule == 'exp_decay':
+        optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr,momentum=momentum)
         initial_learning_rate = args.lr
 
         def lr_exp_decay(epoch,lr):
@@ -267,21 +224,56 @@ def main():
         cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=args.checkpoint_dir,monitor='val_acc',save_freq='epoch',verbose=1)
         callbacks.append(cp_callback)
 
+    return callbacks, optimizer
+
+def apply_data_aug(args,train_ds):
+    """
+    Takes in a tf.data.dataset, applies data augmentation
+    """
+
+
+    if args.dataset == 'imagenet':
+        train_ds = imgnt_data_aug(train_ds)
+    elif args.dataset == 'cifar10':
+        train_ds = cifar10_data_aug(train_ds)
+    elif args.dataset == 'cifar100':
+        train_ds = cifar100_data_aug(train_ds)
+
+    return train_ds
+
+
+
+
+def main():
+
+    args = get_args()
+
+    num_classes, img_shape = get_dataset_props(args)
+
+    model = get_model(args,num_classes,img_shape)
 
     print("preparing data")
     train_dataset, test_dataset = get_dataset(args)
 
-    # potentially include data augmentation as a part of preprocessing ?
+
     train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
 
+    # now apply data augmentation on train_dataset
+
+    if args.data_aug == True:
+        train_dataset = apply_data_aug(train_dataset)
+
+
     print('data preparation complete')
+
+    callbacks, optimizer = get_callbacks_and_optimizer(args)
 
     model.compile(optimizer=keras.optimizers.SGD(learning_rate=args.lr,momentum=0.9),
                   loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   metrics=['accuracy'])
 
     print("starting training")
-    history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=test_dataset,callbacks=callbacks)
+    history = model.fit(train_dataset, epochs=args.num_epochs, validation_data=test_dataset, callbacks=callbacks)
     #print('history.history.keys()=',history.history.keys())
     print('training complete')
 
