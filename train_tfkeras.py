@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 
 # training relevant imports
 from models import bn_vgg, paper_models, keras_models
-from train_utils import stop_acc_threshold
-from data_augmentation import imgnt_data_aug, cifar10_data_aug, cifar100_data_aug
-from preprocessing import imgnt_preproc, cifar10_preproc, cifar100_preproc
+from train_utils.custom_callbacks import stop_acc_thresh
+from train_utils.data_augmentation import imgnt_data_aug, cifar10_data_aug, cifar100_data_aug
+from train_utils.preprocessing import imgnt_preproc, cifar10_preproc, cifar100_preproc
 
 
 def get_args():
@@ -86,12 +86,12 @@ def get_dataset(args):
         (x_train,y_train), (x_test,y_test) = tf.keras.datasets.cifar10.load_data()
         train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
         test_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
-        return train_dataset, test_dataset
+        return train_dataset.batch(args.batch_size), test_dataset.batch(args.batch_size)
     elif dataset_name.lower() == 'cifar100':
         (x_train,y_train), (x_test,y_test) = tf.keras.datasets.cifar100.load_data()
         train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
         test_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
-        return train_dataset,test_dataset
+        return train_dataset.batch(args.batch_size), test_dataset.batch(args.batch_size)
     elif dataset_name.lower() == 'imagenet':
         return get_imagenet_dataset(args)
 
@@ -217,7 +217,7 @@ def get_callbacks_and_optimizer(args):
     # early stopping
 
     if args.early_stopping:
-        ea = tf.keras.callbacks.EarlyStopping(monitor='val_acc',patience=10,verbose=2)
+        ea = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',patience=10,verbose=2)
         callbacks.append(ea)
 
     if args.save_checkpoints:
@@ -261,7 +261,7 @@ def main():
     # now apply data augmentation on train_dataset
 
     if args.data_aug == True:
-        train_dataset = apply_data_aug(train_dataset)
+        train_dataset = apply_data_aug(args,train_dataset)
 
 
     print('data preparation complete')
