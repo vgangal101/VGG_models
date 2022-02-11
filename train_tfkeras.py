@@ -12,7 +12,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import scipy
 import atexit
 
-
+#tf.debugging.set_log_device_placement(True)
 
 # Todos:
 # 1. Write data augmentation code and evaluate performance
@@ -285,7 +285,8 @@ def main():
     print('data preparation complete')
     
     print('setting up distribution strategy')
-    strategy = tf.distribute.MirroredStrategy()
+    gpus = tf.config.list_logical_devices('GPU')
+    strategy = tf.distribute.MirroredStrategy(gpus)
     
     print('preparing model')
     with strategy.scope():
