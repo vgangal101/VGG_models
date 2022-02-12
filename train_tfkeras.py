@@ -5,12 +5,17 @@ from tensorflow.keras.callbacks import LearningRateScheduler
 import argparse
 import math
 import matplotlib.pyplot as plt
+import scipy
+import atexit
 
 # training relevant imports
 from models import bn_vgg, paper_models, keras_models
 from train_utils.custom_callbacks import stop_acc_thresh
 from train_utils.data_augmentation import imgnt_data_aug, cifar10_data_aug, cifar100_data_aug
 from train_utils.preprocessing import imgnt_preproc, cifar10_preproc, cifar100_preproc
+
+#tf.debugging.set_log_device_placement(True)
+
 
 
 def get_args():
@@ -24,10 +29,11 @@ def get_args():
     parser.add_argument('--lr',type=float,default=1e-2,help='learning rate to use')
     parser.add_argument('--momentum',type=float,default=0.9,help='value for momentum')
     parser.add_argument('--lr_schedule',type=str,default='constant',help='choice of learning rate scheduler')
+    parser.add_argument('--lr_plat_patience',type=int,default=5,help='patience of epochs before reducing lr')
     parser.add_argument('--img_size',type=tuple, default=(224,224,3),help='imagenet crop size')
     parser.add_argument('--data_aug',type=bool,default=True,help='use data augmentation or not')
     parser.add_argument('--early_stopping', type=bool, default=False, help='use early stopping')
-    parser.add_argument('--train_to_%_accuracy',type=float,default=0.5,help='using early stopping to train to certain percentage')
+    parser.add_argument('--train_to_accuracy',type=float,default=0,help='using early stopping to train to certain percentage')
     parser.add_argument('--save_checkpoints',type=bool,default=False,help='whether to save checkpoints or not')
     parser.add_argument('--checkpoint_dir',type=str,default='./checkpoints',help='where to save checkpoints')
     args = parser.parse_args()
@@ -35,24 +41,8 @@ def get_args():
 
 
 
-def preprocess_dataset(args,train_dataset,test_dataset):
-    """
-    train_dataset : tf.data.Dataset
-    test_dataset : tf.data.Dataset
 
-    should return normalized image data + any data augmentation as needed.
 
-    THIS PORTION HERE REQUIRES ATTENTION
-    """
-
-    if args.dataset == 'imagenet':
-        train_dataset, test_dataset = imgnt_preproc(train_dataset,test_dataset)
-    elif args.dataset == 'cifar10':
-        train_dataset, test_dataset = cifar10_preproc(train_dataset,test_dataset)
-    elif args.dataset == 'cifar100':
-        train_dataset, test_dataset = cifar100_preproc(train_dataset,test_dataset)
-
-    return train_dataset, test_dataset
 
 
 def get_imagenet_dataset(args):
@@ -72,7 +62,27 @@ def get_imagenet_dataset(args):
     train_dataset = tf.keras.utils.image_dataset_from_directory(path_train,image_size=IMG_SIZE,batch_size=args.batch_size)
     val_dataset = tf.keras.utils.image_dataset_from_directory(path_val,image_size=IMG_SIZE, batch_size=args.batch_size)
 
-    return train_dataset,val_dataset
+    return train_dataset, val_dataset
+
+
+
+def preprocess_dataset(args,train_dataset,test_dataset):
+    """
+    train_dataset : tf.data.Dataset
+    test_dataset : tf.data.Dataset
+
+    should return normalized image data + any data augmentation as needed.
+    """
+    if args.dataset == 'cifar10':
+        # cifar10 specific processing, double check this !!!!!!
+        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
+        val_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
+    elif args.dataset == 'cifar100':
+        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
+        test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
+
+    return train_dataset, val_dataset
+
 
 
 def get_dataset(args):
@@ -93,7 +103,10 @@ def get_dataset(args):
         test_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
         return train_dataset.batch(args.batch_size), test_dataset.batch(args.batch_size)
     elif dataset_name.lower() == 'imagenet':
-        return get_imagenet_dataset(args)
+        train_dataset, test_dataset = get_imagenet_dataset(args)
+        prcssd_train_dataset, prcssd_test_dataset = preprocess_imgnt(args,train_dataset,test_dataset)
+        data_aug_train_dataset = data_aug_imgnt2(args,prcssd_train_dataset)
+        return data_aug_train_dataset, prcssd_test_dataset
 
 
 def plot_training(history,args):
@@ -214,8 +227,15 @@ def get_callbacks_and_optimizer(args):
     else:
         raise ValueError('invalid value for learning rate scheduler got: ', args.lr_scheduler)
 
-    # early stopping
+    #ReduceLROnPlateau callback
+    reduce_lr_plat = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy',factor=0.1,patience=args.lr_plat_patience)
+    callbacks.append(reduce_lr_plat)
 
+    if args.train_to_accuracy != 0:
+        cb = stop_acc_thresh(args.train_to_accuracy)
+        callbacks.append(cb)
+
+    # early stopping
     if args.early_stopping:
         ea = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',patience=10,verbose=2)
         callbacks.append(ea)
@@ -225,6 +245,8 @@ def get_callbacks_and_optimizer(args):
         callbacks.append(cp_callback)
 
     return callbacks, optimizer
+
+
 
 def apply_data_aug(args,train_ds):
     """
@@ -242,8 +264,6 @@ def apply_data_aug(args,train_ds):
     return train_ds
 
 
-
-
 def main():
 
     args = get_args()
@@ -253,27 +273,40 @@ def main():
     model = get_model(args,num_classes,img_shape)
 
     print("preparing data")
-    train_dataset, test_dataset = get_dataset(args)
 
+    train_dataset, val_dataset = get_dataset(args)
 
     train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
-
-    # now apply data augmentation on train_dataset
 
     if args.data_aug == True:
         train_dataset = apply_data_aug(args,train_dataset)
 
+    callbacks, optimizer = get_callbacks_and_optimizer(args)
+
+    BUFFER_SIZE = 10000
+    train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE).cache().shuffle(BUFFER_SIZE)
+    val_dataset = val_dataset.prefetch(tf.data.AUTOTUNE)
 
     print('data preparation complete')
 
-    callbacks, optimizer = get_callbacks_and_optimizer(args)
+    print('setting up distribution strategy')
+    gpus = tf.config.list_logical_devices('GPU')
+    strategy = tf.distribute.MirroredStrategy(gpus)
 
-    model.compile(optimizer=keras.optimizers.SGD(learning_rate=args.lr,momentum=0.9),
-                  loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                  metrics=['accuracy'])
+    print('preparing model')
+    with strategy.scope():
+        model = None
+        model = get_model(args,num_classes,img_shape)
+        print('model is ready, model chosen=',args.model.lower())
+
+        print('compiling model with essential necessities ....')
+        model.compile(optimizer=optimizer,
+                      loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                      metrics=['accuracy'])
 
     print("starting training")
-    history = model.fit(train_dataset, epochs=args.num_epochs, validation_data=test_dataset, callbacks=callbacks)
+    history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=val_dataset,callbacks=callbacks)
+
     #print('history.history.keys()=',history.history.keys())
     print('training complete')
 
@@ -281,7 +314,7 @@ def main():
     plot_training(history,args)
     print('plotting complete')
 
-    test_loss, test_acc = model.evaluate(test_dataset)
+    test_loss, test_acc = model.evaluate(val_dataset)
     print("test_loss=",test_loss)
     print("test_acc",test_acc)
 
@@ -295,6 +328,7 @@ def main():
     save_to_dir = args.model.lower() + '_' + args.dataset.lower() + '_' +  str(args.batch_size)
     model.save(save_to_dir)
     print("training and eval complete")
+    atexit.register(strategy._extended._collective_ops._pool.close)
 
 
 if __name__ == '__main__':
