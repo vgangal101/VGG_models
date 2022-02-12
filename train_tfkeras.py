@@ -16,8 +16,6 @@ from train_utils.preprocessing import imgnt_preproc, cifar10_preproc, cifar100_p
 
 #tf.debugging.set_log_device_placement(True)
 
-
-
 def get_args():
     parser = argparse.ArgumentParser(description='training configurations')
     parser.add_argument('--model',type=str,help='choices are vgg11,vgg13,vgg16c,vgg16d,vgg19') # either vgg11,13,16,19 , now contains batch normalized options as well
@@ -38,12 +36,6 @@ def get_args():
     parser.add_argument('--checkpoint_dir',type=str,default='./checkpoints',help='where to save checkpoints')
     args = parser.parse_args()
     return args
-
-
-
-
-
-
 
 def get_imagenet_dataset(args):
     path_dir = args.imgnt_data_path
@@ -74,14 +66,12 @@ def preprocess_dataset(args,train_dataset,test_dataset):
     should return normalized image data + any data augmentation as needed.
     """
     if args.dataset == 'cifar10':
-        # cifar10 specific processing, double check this !!!!!!
-        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
-        val_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
+        return cifar10_preproc(train_dataset,test_dataset)
     elif args.dataset == 'cifar100':
-        train_dataset = train_dataset.map(normalize_image).batch(args.batch_size)
-        test_dataset = test_dataset.map(normalize_image).batch(args.batch_size)
-
-    return train_dataset, val_dataset
+        return cifar100_preproc(train_dataset,test_dataset)
+    elif args.dataset == 'imagenet':
+        return imgnt_preproc(train_dataset,test_dataset)
+    
 
 
 
@@ -103,10 +93,8 @@ def get_dataset(args):
         test_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
         return train_dataset.batch(args.batch_size), test_dataset.batch(args.batch_size)
     elif dataset_name.lower() == 'imagenet':
-        train_dataset, test_dataset = get_imagenet_dataset(args)
-        prcssd_train_dataset, prcssd_test_dataset = preprocess_imgnt(args,train_dataset,test_dataset)
-        data_aug_train_dataset = data_aug_imgnt2(args,prcssd_train_dataset)
-        return data_aug_train_dataset, prcssd_test_dataset
+        return get_imagenet_dataset(args)
+         
 
 
 def plot_training(history,args):
@@ -148,14 +136,14 @@ def get_model(args, num_classes, img_shape):
         model = paper_models.VGG16_C(num_classes,img_shape)
     elif args.model.lower() == 'paper_vgg16d':
         model = paper_models.VGG16_D(num_classes,img_shape)
-    elif args.model.lower() == 'paper_vgg19':
+    elif args.model.lower() == 'paper_vgg19e':
         model = paper_models.VGG19_E(num_classes,img_shape)
     elif args.model.lower() == 'bn_vgg16':
         model = bn_vgg.bn_VGG16D(num_classes,img_shape)
     elif args.model.lower() == 'bn_vgg19':
         model = bn_vgg.bn_VGG19E(num_classes,img_shape)
     else:
-        raise ValueError('Invalid value for the model name' + 'got model name' + args.model)
+        raise ValueError('Invalid value for the model name' + 'got model name= ' + args.model)
 
     return model
 
@@ -274,7 +262,7 @@ def main():
 
     print("preparing data")
 
-    train_dataset, val_dataset = get_dataset(args)
+    train_dataset, test_dataset = get_dataset(args)
 
     train_dataset, test_dataset = preprocess_dataset(args,train_dataset,test_dataset)
 
@@ -285,7 +273,7 @@ def main():
 
     BUFFER_SIZE = 10000
     train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE).cache().shuffle(BUFFER_SIZE)
-    val_dataset = val_dataset.prefetch(tf.data.AUTOTUNE)
+    test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
     print('data preparation complete')
 
@@ -305,7 +293,7 @@ def main():
                       metrics=['accuracy'])
 
     print("starting training")
-    history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=val_dataset,callbacks=callbacks)
+    history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=test_dataset,callbacks=callbacks)
 
     #print('history.history.keys()=',history.history.keys())
     print('training complete')
@@ -314,7 +302,7 @@ def main():
     plot_training(history,args)
     print('plotting complete')
 
-    test_loss, test_acc = model.evaluate(val_dataset)
+    test_loss, test_acc = model.evaluate(test_dataset)
     print("test_loss=",test_loss)
     print("test_acc",test_acc)
 
