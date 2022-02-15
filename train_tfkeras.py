@@ -7,10 +7,11 @@ import math
 import matplotlib.pyplot as plt
 import scipy
 import atexit
+import time
 
 # training relevant imports
 from models import bn_vgg, paper_models, keras_models
-from train_utils.custom_callbacks import stop_acc_thresh
+from train_utils.custom_callbacks import stop_acc_thresh, measure_img_sec
 from train_utils.data_augmentation import imgnt_data_aug, cifar10_data_aug, cifar100_data_aug
 from train_utils.preprocessing import imgnt_preproc, cifar10_preproc, cifar100_preproc
 
@@ -33,11 +34,16 @@ def get_args():
     parser.add_argument('--early_stopping', type=bool, default=False, help='use early stopping')
     parser.add_argument('--train_to_accuracy',type=float,default=0,help='using early stopping to train to certain percentage')
     parser.add_argument('--save_checkpoints',type=bool,default=False,help='whether to save checkpoints or not')
+    parser.add_argument('--checkpoint_frequency',type=int,default=5,help='checkpointing frequency')
     parser.add_argument('--checkpoint_dir',type=str,default='./checkpoints',help='where to save checkpoints')
+    parser.add_argument('--num_gpus',type=int,default=1,help='number of gpus to use (on node)')
+    parser.add_argument('--measure_img_sec',type=bool,default=False,help='measure img/sec')
+    parser.add_argument('--resume_training',type=bool,default=False,help='resume_training')
     args = parser.parse_args()
     return args
 
 def get_imagenet_dataset(args):
+    print('loading imagenet dataset')
     path_dir = args.imgnt_data_path
 
     if 'train' in path_dir or 'val' in path_dir :
@@ -54,6 +60,8 @@ def get_imagenet_dataset(args):
     train_dataset = tf.keras.utils.image_dataset_from_directory(path_train,image_size=IMG_SIZE,batch_size=args.batch_size)
     val_dataset = tf.keras.utils.image_dataset_from_directory(path_val,image_size=IMG_SIZE, batch_size=args.batch_size)
 
+    
+    
     return train_dataset, val_dataset
 
 
@@ -229,8 +237,12 @@ def get_callbacks_and_optimizer(args):
         callbacks.append(ea)
 
     if args.save_checkpoints:
-        cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=args.checkpoint_dir,monitor='val_acc',save_freq='epoch',verbose=1)
+        #checkpoint_path = args.checkpoint_dir + 'cp-{epoch:04d}.ckpt'
+        cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=args.checkpoint_dir,monitor='val_accuracy',save_freq='epoch',verbose=1)
         callbacks.append(cp_callback)
+    
+    if args.measure_img_sec:
+        callbacks.append(measure_img_sec(args.batch_size))
 
     return callbacks, optimizer
 
@@ -272,17 +284,22 @@ def main():
     callbacks, optimizer = get_callbacks_and_optimizer(args)
 
     BUFFER_SIZE = 10000
-    train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE).cache().shuffle(BUFFER_SIZE)
+    #train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE).cache().shuffle(BUFFER_SIZE)
+    train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
     test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
     print('data preparation complete')
 
     print('setting up distribution strategy')
     gpus = tf.config.list_logical_devices('GPU')
-    strategy = tf.distribute.MirroredStrategy(gpus)
+    print('number of gpus used = ',args.num_gpus)
+    strategy = tf.distribute.MirroredStrategy(gpus[:args.num_gpus])
 
+    
     print('preparing model')
     with strategy.scope():
+        
+        # MODEL LOADING AND RESTORE CODE SEEMS TO FIT HERE !! 
         model = None
         model = get_model(args,num_classes,img_shape)
         print('model is ready, model chosen=',args.model.lower())
@@ -293,8 +310,11 @@ def main():
                       metrics=['accuracy'])
 
     print("starting training")
+    #time_start = time.time()
     history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=test_dataset,callbacks=callbacks)
-
+    #time_end = time.time()
+    
+    #print('time to complete training',time_end-time_start)
     #print('history.history.keys()=',history.history.keys())
     print('training complete')
 
