@@ -52,10 +52,7 @@ def get_imagenet_dataset(args):
     path_train = path_dir + '/train'
     path_val = path_dir + '/val'
 
-    # specify image size ?????? -- lets set it to 224,224,3
-
     IMG_SIZE = args.img_size[:2]
-
 
     train_dataset = tf.keras.utils.image_dataset_from_directory(path_train,image_size=IMG_SIZE,batch_size=args.batch_size)
     val_dataset = tf.keras.utils.image_dataset_from_directory(path_val,image_size=IMG_SIZE, batch_size=args.batch_size)
