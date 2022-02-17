@@ -5,6 +5,7 @@ def normalize_image(image,label):
     return tf.cast(image,tf.float32) / 255., label
 
 
+
 def imgnt_mean_substract1(image,label):
     #print(type(image))
     #print(image.shape)
@@ -18,6 +19,20 @@ def imgnt_mean_substract2(image,label):
     image /= 127.5
     image -= 1.
     return image,label
+
+
+def RGBtoBGR_substractMeanRGBVal(image,label):
+    """
+    Useful for both VGG and Resnet 
+    """
+    mean = [103.939, 116.779, 123.68]
+    image = image[...,::-1] # convert RGB to BGR 
+    mean_tensor = tf.constant(-np.array(mean)) # mean tensor
+    if image.dtype != mean_tensor.dtype:
+        image = tf.add(image, tf.cast(mean_tensor, image.dtype))
+    else:
+        image = tf.add(image, mean_tensor)
+    return image
 
 
 def imgnt_preproc(train_ds,test_ds):
