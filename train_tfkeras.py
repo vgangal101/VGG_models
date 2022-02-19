@@ -304,7 +304,7 @@ def main():
         print('compiling model with essential necessities ....')
         model.compile(optimizer=optimizer,
                       loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                      metrics=['accuracy'])
+                      metrics=['accuracy',tf.keras.metrics.SparseTopKCategoricalAccuracy(k=1,name='top1_acc'),tf.keras.metrics.TopKCategoricalAccuracy(k=5,name='top5_acc')])
 
     print("starting training")
     #time_start = time.time()
