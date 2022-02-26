@@ -10,7 +10,7 @@ def get_args():
     parser.add_argument('--checkpoint_dir',type=str,default='./checkpoints',help='where to save checkpoints')
     parser.add_argument('--num_gpus',type=int,default=1,help='number of gpus to use (on node)')
     parser.add_argument('--img_size',type=tuple, default=(224,224,3),help='imagenet crop size')
-    parser.add_argument('-imgnt_data_path',type=str,default='/data/petabyte/IMAGENET/Imagenet2012',help='only provide if imagenet is specified')
+    parser.add_argument('--imgnt_data_path',type=str,default='/data/petabyte/IMAGENET/Imagenet2012',help='only provide if imagenet is specified')
     parser.add_argument('--batch_size',type=int,default=256)
     args = parser.parse_args()
     return args

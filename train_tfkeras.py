@@ -11,7 +11,7 @@ import time
 
 # training relevant imports
 from models import bn_vgg, paper_models, keras_models
-from train_utils.custom_callbacks import stop_acc_thresh, measure_img_sec
+from train_utils.custom_callbacks import stop_acc_thresh, measure_img_sec, epoch_lr_scheduler
 from train_utils.data_augmentation import imgnt_data_aug, cifar10_data_aug, cifar100_data_aug
 from train_utils.preprocessing import imgnt_preproc, cifar10_preproc, cifar100_preproc
 
@@ -28,7 +28,6 @@ def get_args():
     parser.add_argument('--lr',type=float,default=1e-2,help='learning rate to use')
     parser.add_argument('--momentum',type=float,default=0.9,help='value for momentum')
     parser.add_argument('--lr_schedule',type=str,default='constant',help='choice of learning rate scheduler')
-    parser.add_argument('--lr_plat_patience',type=int,default=5,help='patience of epochs before reducing lr')
     parser.add_argument('--img_size',type=tuple, default=(224,224,3),help='imagenet crop size')
     parser.add_argument('--data_aug',type=bool,default=True,help='use data augmentation or not')
     parser.add_argument('--early_stopping', type=bool, default=False, help='use early stopping')
@@ -39,6 +38,9 @@ def get_args():
     parser.add_argument('--num_gpus',type=int,default=1,help='number of gpus to use (on node)')
     parser.add_argument('--measure_img_sec',type=bool,default=False,help='measure img/sec')
     parser.add_argument('--resume_training',type=bool,default=False,help='resume_training')
+    #parser.add_argument('--use_epoch_lr_scheduler',type=bool,default=False,help='use custom lr scheduler based on epoch')
+    parser.add_argument('--use_ReduceLROnPlateau',type=bool,default=False,help='use ReduceLROnPlateau callback')
+    parser.add_argument('--lr_plat_patience',type=int,default=5,help='patience of epochs before reducing lr')
     args = parser.parse_args()
     return args
 
@@ -217,12 +219,17 @@ def get_callbacks_and_optimizer(args):
         lr_callback = LearningRateScheduler(lr_exp_decay,verbose=1)
         callbacks.append(lr_callback)
 
+    elif args.lr_schedule == 'epoch_lr_scheduler':
+        # custom lr_schedule that based on a certain number of epochs passed drop the learning rate.
+        optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr,momentum=momentum)
+        callbacks.append(epoch_lr_scheduler())
     else:
         raise ValueError('invalid value for learning rate scheduler got: ', args.lr_scheduler)
 
-    #ReduceLROnPlateau callback
-    reduce_lr_plat = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy',factor=0.1,patience=args.lr_plat_patience)
-    callbacks.append(reduce_lr_plat)
+    
+    if args.use_ReduceLROnPlateau:
+        reduce_lr_plat = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy',factor=0.1,patience=args.lr_plat_patience)
+        callbacks.append(reduce_lr_plat)
 
     if args.train_to_accuracy != 0:
         cb = stop_acc_thresh(args.train_to_accuracy)
@@ -319,7 +326,7 @@ def main():
     plot_training(history,args)
     print('plotting complete')
 
-    test_loss, test_acc = model.evaluate(test_dataset)
+    test_loss, test_acc, test_top1acc, test_top5acc = model.evaluate(test_dataset)
     print("test_loss=",test_loss)
     print("test_acc",test_acc)
 

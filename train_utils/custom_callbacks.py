@@ -54,7 +54,21 @@ class measure_img_sec(tf.keras.callbacks.Callback):
         """
         overrall_img_sec = np.mean(np.array(self.per_epoch_log))
         print('overrall img_sec across all epochs=',overrall_img_sec)
+
         
+def epoch_lr_scheduler():
+    def scheduler(epoch,lr):
+        new_lr = None
+        if epoch == 25:
+            new_lr = lr * 0.1
+        elif epoch == 50:
+            new_lr = lr * 0.1
+        else: 
+            new_lr = lr
+        return new_lr
+    
+    scheduler_callback = tf.keras.callbacks.LearningRateScheduler(scheduler,verbose=1)
+    return scheduler_callback
         
         
         

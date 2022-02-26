@@ -173,53 +173,53 @@ def VGG16_D(num_classes,img_shape):
     model.add(keras.layers.InputLayer(input_shape=img_shape))
 
     model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
-                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.Conv2D(64,(3,3),activation='relu',padding='same',strides=1,
-                    kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+                    kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
     model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
-            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.Conv2D(128,(3,3),activation='relu',padding='same',strides=1,
-            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
     model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
-            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
-            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.Conv2D(256,(3,3),activation='relu',padding='same',strides=1,
-            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
 
     model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
-                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
-                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
-                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
 
     model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
 
     model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
-                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
-                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+                kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
     model.add(keras.layers.Conv2D(512,(3,3),activation='relu',padding='same',strides=1,
-            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4)))
+            kernel_initializer='glorot_uniform',kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
 
 
     model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
