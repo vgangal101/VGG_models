@@ -8,8 +8,18 @@ def rand_horiz_flip(train_ds):
     return train_ds
 
 
+def rand_rotation(train_ds):
+    train_ds = train_ds.map(lambda x,y:(tf.keras.preprocessing.image.random_rotation(x,15),y),num_parallel_calls=tf.data.AUTOTUNE)
+    return train_ds
+
+def random_shear(train_ds):
+    train_ds = train_ds.map(lambda x,y:(tf.keras.preprocessing.image.random_shear(x,15),y),num_parallel_calls=tf.data.AUTOTUNE)
+    return train_ds
+
+
 def imgnt_data_aug(train_ds):
     train_ds = rand_horiz_flip(train_ds)
+    train_ds = rand_rotation(train_ds)
     return train_ds
 
 def cifar10_data_aug(train_ds):
