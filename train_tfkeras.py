@@ -10,7 +10,7 @@ import atexit
 import time
 
 # training relevant imports
-from models import bn_vgg, paper_models, keras_models
+from models import bn_vgg, paper_models, official_keras_models, trainable_models
 from train_utils.custom_callbacks import train_to_accuracy,measure_img_sec,lr_schedule_VGGnet
 from train_utils.data_augmentation import imgnt_data_aug, cifar10_data_aug, cifar100_data_aug
 from train_utils.preprocessing import imgnt_preproc, cifar10_preproc, cifar100_preproc
@@ -133,21 +133,21 @@ def plot_training(history,args):
 
 def get_model(args, num_classes, img_shape):
     model = None
-    if args.model.lower() == 'paper_vgg11':
+    if args.model == 'paper_vgg11':
         model = paper_models.VGG11_A(num_classes,img_shape)
-    elif args.model.lower() == 'paper_vgg13':
+    elif args.model == 'paper_vgg13':
         model = paper_models.VGG13_B(num_classes,img_shape)
-    elif args.model.lower() == 'paper_vgg16c':
+    elif args.model == 'paper_vgg16c':
         model = paper_models.VGG16_C(num_classes,img_shape)
-    elif args.model.lower() == 'paper_vgg16d':
+    elif args.model == 'paper_vgg16d':
         model = paper_models.VGG16_D(num_classes,img_shape)
-    elif args.model.lower() == 'paper_vgg19e':
+    elif args.model == 'paper_vgg19e':
         model = paper_models.VGG19_E(num_classes,img_shape)
-    elif args.model.lower() == 'bn_vgg16':
+    elif args.model == 'bn_vgg16':
         model = bn_vgg.bn_VGG16D(num_classes,img_shape)
-    elif args.model.lower() == 'bn_vgg19':
+    elif args.model == 'bn_vgg19':
         model = bn_vgg.bn_VGG19E(num_classes,img_shape)
-    elif args.model.lower() == 'vgg16':
+    elif args.model == 'VGG16':
         model = trainable_models.VGG16()
     else:
         raise ValueError('Invalid value for the model name' + 'got model name= ' + args.model)
