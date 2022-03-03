@@ -331,7 +331,7 @@ def main():
     print("test_loss=",test_loss)
     print("test_acc=",test_acc)
     print('top1_acc=',top1_acc)
-    print('top5_acc=',top5_acc
+    print('top5_acc=',top5_acc)
 
     train_eval_log_file = open('./train_eval_file_' + args.model + '_' +  args.dataset + '_' + str(args.batch_size) + '.log', 'w')
 
@@ -341,9 +341,6 @@ def main():
     train_eval_log_file.write('test_acc' + '=' + str(test_acc) + '\n')
     train_eval_log_file.write('top1_acc' + '=' + str(top1_acc) + '\n')
     train_eval_log_file.write('top5_acc' + '=' + str(top5_acc) + '\n')
-
-          
-          
           
     print("training and eval complete")
     atexit.register(strategy._extended._collective_ops._pool.close)
