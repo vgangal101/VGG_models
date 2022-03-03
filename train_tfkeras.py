@@ -11,7 +11,7 @@ import time
 
 # training relevant imports
 from models import bn_vgg, paper_models, official_keras_models, trainable_models
-from train_utils.custom_callbacks import train_to_accuracy,measure_img_sec,lr_schedule_VGGnet
+from train_utils.custom_callbacks import stop_acc_thresh,measure_img_sec,lr_schedule_VGGnet
 from train_utils.data_augmentation import imgnt_data_aug, cifar10_data_aug, cifar100_data_aug
 from train_utils.preprocessing import imgnt_preproc, cifar10_preproc, cifar100_preproc
 
@@ -185,7 +185,7 @@ def get_callbacks_and_optimizer(args):
 
 
     if args.lr_schedule == 'constant':
-        optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr,momentum=momentum,clip_by_norm=1.0)
+        optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr,momentum=momentum)
     elif args.lr_schedule == 'time':
         decay = args.lr / args.num_epochs
         optimizer = tf.keras.optimizers.SGD(learning_rate=args.lr,momentum=momentum)
@@ -243,8 +243,8 @@ def get_callbacks_and_optimizer(args):
     if args.measure_img_sec:
         callbacks.append(measure_img_sec(args.batch_size))
 
-    if args.dataset == 'imagenet' and args.model == 'VGG16':
-        callbacks.append(lr_schedule_VGGnet())
+    #if args.dataset == 'imagenet' and args.model == 'VGG16':
+    #    callbacks.append(lr_schedule_VGGnet())
 
     return callbacks, optimizer
 
@@ -309,7 +309,7 @@ def main():
         print('compiling model with essential necessities ....')
         model.compile(optimizer=optimizer,
                       loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                      metrics=['accuracy',tf.keras.metrics.SparseTopKCategoricalAccuracy(k=1,name='top1_acc'),tf.keras.metrics.TopKCategoricalAccuracy(k=5,name='top5_acc')])
+                      metrics=['accuracy',tf.keras.metrics.SparseTopKCategoricalAccuracy(k=1,name='top1_acc'),tf.keras.metrics.SparseTopKCategoricalAccuracy(k=5,name='top5_acc')])
 
     print("starting training")
     #time_start = time.time()
@@ -323,10 +323,15 @@ def main():
     print('plotting...')
     plot_training(history,args)
     print('plotting complete')
-
-    test_loss, test_acc = model.evaluate(test_dataset)
+    
+    save_to_dir = args.model.lower() + '_' + args.dataset.lower() + '_' +  str(args.batch_size)
+    model.save(save_to_dir)
+    
+    test_loss, test_acc, top1_acc, top5_acc = model.evaluate(test_dataset)
     print("test_loss=",test_loss)
-    print("test_acc",test_acc)
+    print("test_acc=",test_acc)
+    print('top1_acc=',top1_acc)
+    print('top5_acc=',top5_acc
 
     train_eval_log_file = open('./train_eval_file_' + args.model + '_' +  args.dataset + '_' + str(args.batch_size) + '.log', 'w')
 
@@ -334,9 +339,12 @@ def main():
 
     train_eval_log_file.write('test_loss' + '=' + str(test_loss) + '\n')
     train_eval_log_file.write('test_acc' + '=' + str(test_acc) + '\n')
+    train_eval_log_file.write('top1_acc' + '=' + str(top1_acc) + '\n')
+    train_eval_log_file.write('top5_acc' + '=' + str(top5_acc) + '\n')
 
-    save_to_dir = args.model.lower() + '_' + args.dataset.lower() + '_' +  str(args.batch_size)
-    model.save(save_to_dir)
+          
+          
+          
     print("training and eval complete")
     atexit.register(strategy._extended._collective_ops._pool.close)
 

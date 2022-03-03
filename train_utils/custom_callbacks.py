@@ -65,5 +65,5 @@ def lr_schedule_VGGnet():
         else:
             return lr
 
-    callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
+    callback = tf.keras.callbacks.LearningRateScheduler(lr_schedule)
     return callback

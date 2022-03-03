@@ -19,7 +19,7 @@ def random_shear(train_ds):
 
 def imgnt_data_aug(train_ds):
     train_ds = rand_horiz_flip(train_ds)
-    train_ds = rand_rotation(train_ds)
+    #train_ds = rand_rotation(train_ds)
     return train_ds
 
 def cifar10_data_aug(train_ds):
