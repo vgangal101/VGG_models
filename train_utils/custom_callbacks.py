@@ -56,7 +56,25 @@ class measure_img_sec(tf.keras.callbacks.Callback):
         print('overrall img_sec across all epochs=',overrall_img_sec)
 
 
+
+        
 def lr_schedule_VGGnet():
+    def lr_schedule(epoch,lr):
+        if epoch == 36:
+            return 1e-3
+        elif epoch == 51:
+            return 1e-4
+        else:
+            return lr
+
+    callback = tf.keras.callbacks.LearningRateScheduler(lr_schedule)
+    return callback
+        
+        
+        
+        
+        
+def old_lr_schedule_VGGnet():
     def lr_schedule(epoch,lr):
         if epoch == 51:
             return 1e-3
