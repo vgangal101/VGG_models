@@ -136,20 +136,27 @@ def VGG19():
                 kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
     model.add(keras.layers.Dropout(0.25))
 
+
     # conv block 2
-    model.add(keras.layers.Conv2D(128,(3,3),padding='same',strides=1,
-                kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-    model.add(keras.layers.PReLU())
-    model.add(keras.layers.BatchNormalization())
+
     model.add(keras.layers.Conv2D(128,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
                 kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
+    model.add(keras.layers.Conv2D(128,(3,3),padding='same',strides=1,
+                kernel_initializer='he_normal',
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+    model.add(keras.layers.PReLU())
+    model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+    model.add(keras.layers.Dropout(0.25))
 
 
     # conv block 3
@@ -158,92 +165,88 @@ def VGG19():
                 kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.Conv2D(256,(3,3),padding='same',strides=1,
-                kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-    model.add(keras.layers.PReLU())
-    model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.Conv2D(256,(3,3),padding='same',strides=1,
-                kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-    model.add(keras.layers.PReLU())
-    model.add(keras.layers.BatchNormalization())
+
     model.add(keras.layers.Conv2D(256,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
                 kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
-
-    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+    model.add(keras.layers.Conv2D(256,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
                 kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-
     model.add(keras.layers.PReLU())
-
     model.add(keras.layers.BatchNormalization())
 
-
-    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+    model.add(keras.layers.Conv2D(256,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
                 kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-
     model.add(keras.layers.PReLU())
-
-    model.add(keras.layers.BatchNormalization())
-
-    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
-                kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-
-    model.add(keras.layers.PReLU())
-
-    model.add(keras.layers.BatchNormalization())
-
-    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
-                kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-
-    model.add(keras.layers.PReLU())
-
-    model.add(keras.layers.BatchNormalization())
-
-
-    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
-                kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-
-    model.add(keras.layers.PReLU())
-
-    model.add(keras.layers.BatchNormalization())
-
-
-    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
-                kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-
-    model.add(keras.layers.PReLU())
-
-    model.add(keras.layers.BatchNormalization())
-
-    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
-                kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-
-    model.add(keras.layers.PReLU())
-
-    model.add(keras.layers.BatchNormalization())
-
-    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
-                kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
-
-    model.add(keras.layers.PReLU())
-
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+    model.add(keras.layers.Dropout(0.25))
 
+
+    # conv layer 4
+    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+                kernel_initializer='he_normal',
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+    model.add(keras.layers.PReLU())
+    model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+                kernel_initializer='he_normal',
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+    model.add(keras.layers.PReLU())
+    model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+                kernel_initializer='he_normal',
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+    model.add(keras.layers.PReLU())
+    model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+                kernel_initializer='he_normal',
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+    model.add(keras.layers.PReLU())
+    model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+    model.add(keras.layers.Dropout(0.25))
+
+
+    #conv layer 5
+    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+                kernel_initializer='he_normal',
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+    model.add(keras.layers.PReLU())
+    model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+                kernel_initializer='he_normal',
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+    model.add(keras.layers.PReLU())
+    model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+                kernel_initializer='he_normal',
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+    model.add(keras.layers.PReLU())
+    model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
+                kernel_initializer='he_normal',
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+    model.add(keras.layers.PReLU())
+    model.add(keras.layers.BatchNormalization())
+
+    model.add(keras.layers.MaxPool2D(pool_size=(2,2),strides=2))
+    model.add(keras.layers.Dropout(0.25))
+
+
+    # Dense layers
     model.add(keras.layers.Flatten())
 
     model.add(keras.layers.Dense(4096, activation='relu'))
