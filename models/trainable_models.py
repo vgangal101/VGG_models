@@ -248,7 +248,6 @@ def VGG19():
 
     # Dense layers
     model.add(keras.layers.Flatten())
-
     model.add(keras.layers.Dense(4096, activation='relu'))
     model.add(keras.layers.Dropout(0.5))
     model.add(keras.layers.Dense(4096, activation='relu'))
