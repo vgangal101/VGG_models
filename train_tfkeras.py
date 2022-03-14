@@ -57,8 +57,8 @@ def get_imagenet_dataset(args):
     train_dataset = tf.keras.utils.image_dataset_from_directory(path_train,image_size=IMG_SIZE,batch_size=args.batch_size)
     val_dataset = tf.keras.utils.image_dataset_from_directory(path_val,image_size=IMG_SIZE, batch_size=args.batch_size)
 
-    
-    
+
+
     return train_dataset, val_dataset
 
 
@@ -76,7 +76,7 @@ def preprocess_dataset(args,train_dataset,test_dataset):
         return cifar100_preproc(train_dataset,test_dataset)
     elif args.dataset == 'imagenet':
         return imgnt_preproc(train_dataset,test_dataset)
-    
+
 
 
 
@@ -99,16 +99,22 @@ def get_dataset(args):
         return train_dataset.batch(args.batch_size), test_dataset.batch(args.batch_size)
     elif dataset_name.lower() == 'imagenet':
         return get_imagenet_dataset(args)
-         
+
 
 
 def plot_training(history,args):
+    print('history.history=',history.history)
     accuracy = history.history['accuracy']
     val_accuracy = history.history['val_accuracy']
+    val_top1_acc = history.history['val_top1_acc']
+    val_top5_acc = history.history['val_top5_acc']
+
     plt.figure()
     plt.title("Epoch vs Accuracy")
     plt.plot(accuracy,label='training accuracy')
     plt.plot(val_accuracy,label='val_accuracy')
+    plt.plot(val_top1_acc,label='val_top1_acc')
+    plt.plot(val_top5_acc,label='val_top5_acc')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend(loc='lower right')
@@ -237,7 +243,7 @@ def get_callbacks_and_optimizer(args):
         #checkpoint_path = args.checkpoint_dir + 'cp-{epoch:04d}.ckpt'
         cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=args.checkpoint_dir,monitor='val_accuracy',save_freq='epoch',verbose=1)
         callbacks.append(cp_callback)
-    
+
     if args.measure_img_sec:
         callbacks.append(measure_img_sec(args.batch_size))
 
@@ -292,25 +298,32 @@ def main():
     print('number of gpus used = ',args.num_gpus)
     strategy = tf.distribute.MirroredStrategy(gpus[:args.num_gpus])
 
-    
+
     print('preparing model')
     with strategy.scope():
-        
-        # MODEL LOADING AND RESTORE CODE SEEMS TO FIT HERE !! 
-        model = None
-        model = get_model(args,num_classes,img_shape)
-        print('model is ready, model chosen=',args.model.lower())
 
-        print('compiling model with essential necessities ....')
-        model.compile(optimizer=optimizer,
-                      loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                      metrics=['accuracy',tf.keras.metrics.SparseTopKCategoricalAccuracy(k=1,name='top1_acc'),tf.keras.metrics.TopKCategoricalAccuracy(k=5,name='top5_acc')])
+        # MODEL LOADING AND RESTORE CODE SEEMS TO FIT HERE !!
+        model = None
+
+        if args.resume_training:
+            loaded_model = tf.keras.models.load_model(args.checkpoint_dir)
+        else:
+            model = get_model(args,num_classes,img_shape)
+            print('model is ready, model chosen=',args.model.lower())
+
+            print('compiling model with essential necessities ....')
+            model.compile(optimizer=optimizer,
+                        loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                        metrics=['accuracy',tf.keras.metrics.SparseTopKCategoricalAccuracy(k=1,name='top1_acc'),tf.keras.metrics.TopKCategoricalAccuracy(k=5,name='top5_acc')])
+
+
+
 
     print("starting training")
     #time_start = time.time()
     history = model.fit(train_dataset,epochs=args.num_epochs,validation_data=test_dataset,callbacks=callbacks)
     #time_end = time.time()
-    
+
     #print('time to complete training',time_end-time_start)
     #print('history.history.keys()=',history.history.keys())
     print('training complete')
