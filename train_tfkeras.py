@@ -223,8 +223,8 @@ def get_callbacks_and_optimizer(args):
         raise ValueError('invalid value for learning rate scheduler got: ', args.lr_scheduler)
 
     #ReduceLROnPlateau callback
-    reduce_lr_plat = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy',factor=0.1,patience=args.lr_plat_patience)
-    callbacks.append(reduce_lr_plat)
+    #reduce_lr_plat = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy',factor=0.1,patience=args.lr_plat_patience)
+    #callbacks.append(reduce_lr_plat)
 
     if args.train_to_accuracy != 0:
         cb = stop_acc_thresh(args.train_to_accuracy)
@@ -243,8 +243,8 @@ def get_callbacks_and_optimizer(args):
     if args.measure_img_sec:
         callbacks.append(measure_img_sec(args.batch_size))
 
-    #if args.dataset == 'imagenet' and args.model == 'VGG16':
-    #    callbacks.append(lr_schedule_VGGnet())
+    if args.dataset == 'imagenet' and args.model == 'VGG16':
+        callbacks.append(lr_schedule_VGGnet())
 
     return callbacks, optimizer
 
