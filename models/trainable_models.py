@@ -2,9 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-def VGG16():
-    img_shape = (224,224,3)
-    num_classes = 1000
+def VGG16(num_classes,img_shape):
 
     model = keras.Sequential()
 
@@ -113,12 +111,7 @@ def VGG16():
     return model
 
 
-def VGG19():
-
-    raise NotImplementedError("This code is not correctly written yet. To be completed")
-
-    img_shape = (224,224,3)
-    num_classes = 1000
+def VGG19(num_classes,img_shape):
 
     model = keras.Sequential()
 
