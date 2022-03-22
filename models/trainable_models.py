@@ -120,13 +120,13 @@ def VGG19(num_classes,img_shape):
     # conv block 1
     model.add(keras.layers.Conv2D(64,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(64,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
@@ -138,13 +138,13 @@ def VGG19(num_classes,img_shape):
 
     model.add(keras.layers.Conv2D(128,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(128,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
@@ -155,25 +155,25 @@ def VGG19(num_classes,img_shape):
     # conv block 3
     model.add(keras.layers.Conv2D(256,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(256,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(256,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(256,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
@@ -184,25 +184,25 @@ def VGG19(num_classes,img_shape):
     # conv layer 4
     model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
@@ -213,25 +213,25 @@ def VGG19(num_classes,img_shape):
     #conv layer 5
     model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
     model.add(keras.layers.Conv2D(512,(3,3),padding='same',strides=1,
                 kernel_initializer='he_normal',
-                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizer.L2(l2=5e-4)))
+                kernel_regularizer=keras.regularizers.L2(l2=5e-4),bias_regularizer=keras.regularizers.L2(l2=5e-4)))
     model.add(keras.layers.PReLU())
     model.add(keras.layers.BatchNormalization())
 
