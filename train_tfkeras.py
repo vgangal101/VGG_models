@@ -111,10 +111,12 @@ def get_dataset(args):
 def plot_training(history,args):
     accuracy = history.history['accuracy']
     val_accuracy = history.history['val_accuracy']
+    top5_acc = history.history['top5_acc']
     plt.figure()
     plt.title("Epoch vs Accuracy")
     plt.plot(accuracy,label='training accuracy')
     plt.plot(val_accuracy,label='val_accuracy')
+    plt.plot(top5_acc,label='top5 accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend(loc='lower right')
